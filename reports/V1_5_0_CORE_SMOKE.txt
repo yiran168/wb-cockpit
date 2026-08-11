@@ -1,0 +1,1 @@
+PASS core protocol/profile/serial smoke

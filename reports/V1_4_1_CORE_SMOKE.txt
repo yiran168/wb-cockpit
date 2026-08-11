@@ -1,0 +1,19 @@
+PASS 384 dot head
+PASS 48 bytes per row
+PASS 1024-byte chunks
+PASS 1ms chunk delay
+PASS 203 DPI
+PASS 57mm clamps to physical head
+PASS 30mm maps to 240 dots
+PASS 384 dots at 203dpi is ~48.05mm printable
+PASS raster header 300
+PASS feed packet count
+PASS feed 255 #1
+PASS feed 255 #2
+PASS feed 90
+PASS status priority
+PASS density command
+PASS shutdown command
+PASS serial hex
+PASS base26 one
+ALL EXACT CORE TESTS PASS

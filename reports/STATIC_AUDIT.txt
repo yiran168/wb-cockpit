@@ -1,0 +1,21 @@
+Java files: 47
+Unit test sources: 2
+Manifest activities: 24
+Native .so/.aar: 0
+Compiled .class in source: 0
+App ID collision guard: com.yiran168.cuotiprint
+Printer profile: 57mm paper / 203DPI / 384-dot head
+Real RFCOMM SPP transport + ACK/status preflight: enabled
+Final raster preview gate: enabled
+Local preview pages: 18 / 18
+Zoomable/draggable visual previews: enabled
+Custom drag / pinch / exact XYWH / font / stroke tools: enabled
+Global content scale + X/Y offset for every print workflow: enabled
+Splash cover + stronger haptic fallback + appearance recreation: enabled
+Built-in template gallery: 25 templates
+Final print dialog: scrollable detailed parameters + live raster refresh
+Photo dithering: 8 modes
+Main tabs: horizontal swipe navigation + directional transition
+Open-source attribution page: enabled
+
+PASS: v1.3.0 release static audit

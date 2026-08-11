@@ -1,0 +1,19 @@
+PASS sample accepted EAN_13 -> 690123456789
+PASS sample accepted EAN_8 -> 1234567
+PASS sample accepted UPC_A -> 01234567890
+PASS sample accepted UPC_E -> 1234567
+PASS sample accepted ITF -> 12345678
+PASS sample accepted CODE_39 -> ITEM-2026
+PASS sample accepted CODE_93 -> ITEM2026
+PASS sample accepted CODE_128 -> ORDER-2026-001
+PASS sample accepted CODABAR -> A12345678A
+PASS sample accepted DATA_MATRIX -> https://example.com
+PASS sample accepted PDF_417 -> DOC-2026-001
+PASS sample accepted AZTEC -> ASSET-2026-001
+PASS reject EAN_13: EAN-13 ?? 12 ? 13 ??????? 10 ?
+PASS reject EAN_8: EAN-8 ?????? 0-9
+PASS reject ITF: ITF ??????????? 12345678
+PASS reject CODE_128: Code 128 ??????????????????????
+PASS reject DATA_MATRIX: ???????
+PASS Codabar guard auto-add
+ALL BARCODE PREVALIDATION SMOKE PASS

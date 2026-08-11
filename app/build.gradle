@@ -1,0 +1,36 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.qring.print'
+    compileSdk 36
+
+    defaultConfig {
+        applicationId "com.yiran168.cuotiprint"
+        minSdk 21
+        targetSdk 36
+        versionCode 151
+        versionName "1.5.1"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    lint {
+        abortOnError false
+    }
+}
+
+dependencies {
+    implementation 'com.google.zxing:core:3.5.4'
+    testImplementation 'junit:junit:4.13.2'
+}

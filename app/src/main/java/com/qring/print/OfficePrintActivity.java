@@ -1,0 +1,34 @@
+package com.qring.print;
+
+import android.app.*;
+import android.content.*;
+import android.graphics.*;
+import android.net.Uri;
+import android.os.Bundle;
+import android.view.*;
+import android.widget.*;
+import java.util.*;
+
+/** Word/PPT/Excel/CSV/TXT thermal-friendly document preview and print. */
+public class OfficePrintActivity extends Activity {
+    private static final int PICK=981;
+    private OfficeDocumentReader.Document doc;private int index;private ImageView preview;private TextView info;private SeekBar size,clarity;private Spinner effect;private Bitmap previewBitmap;
+    @Override public void onCreate(Bundle b){super.onCreate(b);setContentView(build());String u=getIntent().getStringExtra("incoming_uri");if(u!=null&&!u.isEmpty())load(Uri.parse(u));else if(getIntent().getData()!=null)load(getIntent().getData());}
+    private View build(){ScrollView sc=new ScrollView(this);LinearLayout root=Ui.page(this,"Office 文档打印");sc.addView(root);
+        LinearLayout source=Ui.card(this);source.addView(Ui.hint(this,"支持 DOCX / PPTX / XLSX / CSV / TXT。Word/PPT 会转换为适合 58mm 热敏纸的文字版式，避免依赖外部 Office 应用。"));Button pick=Ui.primaryButton(this,"选择文档");pick.setOnClickListener(v->pick());source.addView(pick);info=Ui.hint(this,"尚未选择文档");source.addView(info);root.addView(source);
+        preview=new ZoomablePreviewView(this);preview.setAdjustViewBounds(true);preview.setScaleType(ImageView.ScaleType.FIT_CENTER);root.addView(Ui.previewFrame(this,preview,"当前页 · 实时热敏预览"),new LinearLayout.LayoutParams(-1,Ui.dp(this,360)));
+        LinearLayout opts=Ui.card(this);opts.addView(Ui.hint(this,"字号"));size=new SeekBar(this);size.setMax(28);size.setProgress(10);opts.addView(size);opts.addView(Ui.hint(this,"清晰度阈值"));clarity=new SeekBar(this);clarity.setMax(255);clarity.setProgress(190);opts.addView(clarity);effect=new Spinner(this);effect.setAdapter(new ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,new String[]{"黑白清晰","Floyd 柔和","Bayer 网点"}));opts.addView(effect);root.addView(opts);
+        LinearLayout nav=new LinearLayout(this);nav.setOrientation(LinearLayout.HORIZONTAL);Button prev=Ui.button(this,"上一页"),next=Ui.button(this,"下一页");prev.setOnClickListener(v->{if(doc!=null&&index>0){index--;render();}});next.setOnClickListener(v->{if(doc!=null&&index+1<doc.sections.size()){index++;render();}});nav.addView(prev,new LinearLayout.LayoutParams(0,Ui.dp(this,52),1));nav.addView(next,new LinearLayout.LayoutParams(0,Ui.dp(this,52),1));root.addView(nav);
+        Button one=Ui.primaryButton(this,"预览确认并打印当前页"),all=Ui.button(this,"预览首页并打印全部");one.setOnClickListener(v->printOne());all.setOnClickListener(v->printAll());root.addView(one);root.addView(all);
+        SeekBar.OnSeekBarChangeListener l=new SeekBar.OnSeekBarChangeListener(){public void onProgressChanged(SeekBar s,int p,boolean f){render();}public void onStartTrackingTouch(SeekBar s){}public void onStopTrackingTouch(SeekBar s){}};size.setOnSeekBarChangeListener(l);clarity.setOnSeekBarChangeListener(l);effect.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener(){public void onItemSelected(android.widget.AdapterView<?> p,View v,int pos,long id){render();}public void onNothingSelected(android.widget.AdapterView<?> p){}});return sc;}
+    private void pick(){Intent i=new Intent(Intent.ACTION_OPEN_DOCUMENT);i.addCategory(Intent.CATEGORY_OPENABLE);i.setType("*/*");i.putExtra(Intent.EXTRA_MIME_TYPES,new String[]{"application/vnd.openxmlformats-officedocument.wordprocessingml.document","application/vnd.openxmlformats-officedocument.presentationml.presentation","application/vnd.openxmlformats-officedocument.spreadsheetml.sheet","text/csv","text/plain"});try{startActivityForResult(i,PICK);}catch(Throwable e){Ui.toast(this,"无法打开文件选择器");}}
+    @Override protected void onActivityResult(int r,int result,Intent data){super.onActivityResult(r,result,data);if(r==PICK&&result==RESULT_OK&&data!=null&&data.getData()!=null)load(data.getData());}
+    private void load(Uri u){info.setText("正在解析…");new Thread(()->{try{OfficeDocumentReader.Document d=OfficeDocumentReader.read(this,u);runOnUiThread(()->{if(isFinishing()||isDestroyed())return;doc=d;index=0;render();});}catch(Throwable e){runOnUiThread(()->{if(isFinishing()||isDestroyed())return;info.setText("解析失败");Ui.toast(this,"文档解析失败："+e.getMessage());});}},"OfficeParse").start();}
+    private Bitmap bitmap(int i){return bitmap(i,size==null?10:size.getProgress());}
+    private Bitmap bitmap(int i,int sizeProgress){if(doc==null||i<0||i>=doc.sections.size())return null;float px=(18+Math.max(0,Math.min(28,sizeProgress)))*getResources().getDisplayMetrics().scaledDensity;String title=doc.name+"\n第 "+(i+1)+" / "+doc.sections.size()+" 页\n\n";return RasterEncoder.textBitmap(title+doc.sections.get(i),px,false,false,false,0,7,0,"sans-serif");}
+    private RasterEncoder.Dither dither(){return effect.getSelectedItemPosition()==1?RasterEncoder.Dither.FLOYD:effect.getSelectedItemPosition()==2?RasterEncoder.Dither.BAYER:RasterEncoder.Dither.THRESHOLD;}
+    private void render(){if(doc==null)return;try{Bitmap b=bitmap(index);RasterEncoder.Raster r;try{r=RasterEncoder.encode(b,clarity.getProgress(),dither());}finally{if(b!=null&&!b.isRecycled())b.recycle();}r=PrinterManager.get(this).previewRaster(r);Bitmap next=RasterEncoder.toBitmap(r,1100);Bitmap old=previewBitmap;previewBitmap=next;preview.setImageBitmap(next);if(old!=null&&old!=next&&!old.isRecycled())old.recycle();info.setText(doc.name+" · 第 "+(index+1)+" / "+doc.sections.size()+" 页");Ui.pulse(preview);}catch(Throwable e){Ui.toast(this,"预览失败："+e.getMessage());}}
+    private void printOne(){if(doc==null){Ui.toast(this,"请先选择文档");return;}try{Bitmap b=bitmap(index);RasterEncoder.Raster r;try{r=RasterEncoder.encode(b,clarity.getProgress(),dither());}finally{if(b!=null&&!b.isRecycled())b.recycle();}final int page=index;PrinterManager.get(this).print(this,new PrinterManager.BitmapHolder(r),(ok,msg)->{if(!"已取消打印".equals(msg))Ui.toast(this,msg);if(ok)HistoryStore.addRaster(this,"Office",doc.name+" 第 "+(page+1)+"页",r);});}catch(Throwable e){Ui.toast(this,"生成打印内容失败："+e.getMessage());}}
+    private void printAll(){if(doc==null){Ui.toast(this,"请先选择文档");return;}int total=doc.sections.size();int threshold=clarity.getProgress();int fontProgress=size.getProgress();RasterEncoder.Dither d=dither();PrinterManager.get(this).printGenerated(this,total,i->{Bitmap b=bitmap(i,fontProgress);try{return RasterEncoder.encode(b,threshold,d);}finally{if(b!=null&&!b.isRecycled())b.recycle();}},(done,all,msg)->info.setText("打印进度 "+done+" / "+all),(ok,msg)->{Ui.toast(this,msg);if(ok)HistoryStore.add(this,"Office批量",doc.name+" · "+total+"页");});}
+    @Override protected void onDestroy(){if(previewBitmap!=null&&!previewBitmap.isRecycled())previewBitmap.recycle();previewBitmap=null;super.onDestroy();}
+}
