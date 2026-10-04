@@ -135,7 +135,8 @@
     if (!Array.isArray(obj) || obj.length === 0) return false;
     var item = obj[0];
     return item && typeof item === "object" && "access_token" in item &&
-           ("id" in item || "auth_raw" in item || "profile_raw" in item);
+           ("id" in item || "auth_raw" in item || "profile_raw" in item ||
+            "usage_raw" in item || "created_at" in item);
   }
 
   // ── WorkBuddy → Cockpit Tools ───────────────────────────
@@ -160,7 +161,6 @@
         status: "normal"
       };
       if (item.uid) account.uid = item.uid;
-      if (ts) account.expires_at = ts;
 
       return account;
     });
