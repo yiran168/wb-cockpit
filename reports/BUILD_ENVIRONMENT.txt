@@ -1,5 +1,0 @@
-CuotiPrint Android v1.3.0
-GitHub Actions: JDK 17 / Gradle 9.3.1 / Android API 36 / Build Tools 36.0.0
-Workflow: static audit -> unit tests -> lint -> assembleDebug
-Expected artifact: CuotiPrint-Android-v1.3.0-full-debug.apk
-Local delivery environment: no Android SDK and no physical Bluetooth printer; static audit and Java syntax screening completed locally, full Android compile is delegated to GitHub Actions.

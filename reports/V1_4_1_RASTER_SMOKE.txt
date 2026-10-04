@@ -1,8 +1,0 @@
-PASS continuous auto-length crops vertical blank
-PASS auto width keeps 200-dot effective content centered inside 240-dot media
-PASS fixed label keeps exact height
-PASS fixed label content fits without crop
-PASS preserveMargins disables vertical trim and scales full raster proportionally
-PASS X calibration shifts pixels
-PASS 180 rotation preserves height
-ALL RASTER LAYOUT SMOKE PASS

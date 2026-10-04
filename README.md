@@ -1,70 +1,112 @@
-# 错题打印 / CuotiPrint Android v1.5.1
+# WorkBuddy ⇄ Cockpit Tools Converter
 
-## v1.5.1 FINAL：40 张模板 + 打印点击音效
+<p align="center">
+  <strong>在 WorkBuddy 导出格式与 Cockpit Tools 账号格式之间自由转换</strong>
+</p>
 
-- 内置模板从 25 张扩展到 40 张，增加课程表、阅读摘录、背诵打卡、考试倒计时、学习目标、入库/出库、库存盘点、保质期提醒、冷冻/备餐、双端线缆、维修工单、设备状态、访客证等。
-- 最终“确认打印”加入真实离线 PCM 音效：10 种固定短音、随机使用 10 种、每次程序随机生成；可开关、选样式、调音量、试听。
-- 音效只在用户确认打印时播放，不会写入 SPP 数据，也不会改变 384-dot 光栅内容。
-- 继续保留 57mm/203DPI/384-dot 纸张算法、二维码/条码分类、最终点阵预览、蓝牙 RFCOMM SPP 真打印链路。
+<p align="center">
+  <a href="#features">Features</a> •
+  <a href="#usage">Usage</a> •
+  <a href="#format">Format</a> •
+  <a href="#license">License</a>
+</p>
 
+---
 
-基于 Thisko / QrintPrint 的公开实现与说明继续开发的本地 Android 热敏打印工具。特别感谢 Thisko 开源 QrintPrint；本项目参考了其 Qring / BeePrt 经典蓝牙 SPP、384-dot 光栅与分包思路，并在 Android 端继续实现纸张/标签排版、预览、模板、文档、自定义画布等功能。
+## Why
 
-> 本项目是第三方工具，不代表原作者或设备厂商的官方应用、合作或背书。应用内说明统一使用“使用说明/功能说明”。
+WorkBuddy 和 [Cockpit Tools](https://github.com/jlcodes99/cockpit-tools) 是两个优秀的 AI IDE 账号管理工具，但它们的账号导出格式不同。这个工具让你可以在两种格式之间自由转换，无需手动编辑 JSON。
 
-## v1.4.1 VERIFIED：再次检查编译与真实功能路径
+## Features
 
-这一版在 v1.4.0 纸张/编码架构上继续做“不是空壳”的核查和补洞：自定义画布补齐一维条码、所有可扫码元素保护静区、模板码/序列码统一保留 quiet zone、修复扫码大图临时内存释放，并清理 targetSdk 36 下不应该提前请求的 Android 17 局域网权限。详见 `VERIFICATION_REPORT_v1.4.1.md`。
+- **双向转换** — WorkBuddy → Cockpit Tools，或 Cockpit Tools → WorkBuddy
+- **自动识别** — 粘贴 JSON 后自动检测格式方向
+- **时间格式处理** — `expires_at` 在日期字符串和 Unix 时间戳之间自动转换
+- **纯前端** — 零依赖，零上传，所有转换在浏览器本地完成
+- **MIT 协议** — 随意使用、修改、分发
 
-## v1.4.1：纸张尺寸不再假装能自动检测
+## Usage
 
-目标机器的红外传感器只可靠判断“有纸 / 缺纸”，无法测出纸宽、标签宽或标签长度。因此 APP 不伪造自动尺寸检测，而采用：
+### 在线使用
 
-1. **用户声明介质尺寸**：纸张/标签宽度 10–57mm；标签纸另外设置长度。
-2. **203DPI 换算**：毫米按 203DPI 转为打印点；打印头最终始终是 384 dots / 48 bytes 每行。
-3. **有效内容边界分析**：连续纸可分析黑色内容上下左右边界，自动去掉无效空白，让长度随真实内容结束。
-4. **内容宽度三种模式**：按有效内容自动、铺满当前可打印区、自定义毫米。
-5. **对齐与校准**：装纸位置左/中/右、内容左/中/右、标签内顶部/居中/底部、X/Y 偏移、打印前后走纸、180°方向。
-6. **固定标签保护**：标签内容过高时等比例缩小，优先完整放入，不静默裁掉。
+访问 GitHub Pages 站点，粘贴 JSON 即可。
 
-57mm 是耗材物理宽度；384 dots 在 203DPI 下约等于 **48.05mm 实际成像宽度**。纸宽大于约 48mm 时，物理打印头仍只能成像 384 dots，这是硬件上限。
+### 本地使用
 
-## 所见即所得
+```bash
+# 克隆仓库
+git clone https://github.com/YOUR_USERNAME/workbuddy-cockpit-converter.git
+cd workbuddy-cockpit-converter
 
-所有真实打印任务最终都会进入“确认最终打印效果”。该页面与真正发送给打印机的路径共用 `PrinterManager.applyPaperSettings()` / `RasterEncoder.layoutToMedia()`，因此最终确认页显示的黑白 384-dot 点阵就是之后发送的数据布局。
+# 直接用浏览器打开 index.html
+open index.html
+```
 
-编辑页面的源图/文档预览用于内容编辑；文本、图片、PDF、Office、网页、商品标签、二维码和条码的热敏预览也已尽量提前套用同一纸张布局。真正打印前仍以“最终点阵”确认页为准。
+### 作为库使用
 
-## 二维码与条码分开
+```javascript
+const result = WorkBuddyConverter.convert(jsonString);
+// result.direction: "wb2cockpit" | "cockpit2wb"
+// result.data: 转换后的数组
+```
 
-- **二维码**：独立入口；支持中文、网址、任意 UTF-8 文本；支持 L/M/Q/H 容错等级。
-- **条形码**：独立入口，并继续分为：
-  - 一维：Code 128 / 39 / 93、EAN-13 / EAN-8、UPC-A / UPC-E、ITF、Codabar、GS1-128。
-  - 二维条码：Data Matrix、PDF417、Aztec。
-- 每种制式生成前先做格式校验并显示中文规则和合法示例。
-- 空输入不会再使用错误的默认字符串生成，因此不会出现旧版截图中的 ITF、EAN、UPC、PDF417 连锁报错。
-- QR/条码使用“保留静区”光栅路径，避免自动裁白边破坏扫码所需 quiet zone。
+## Format
 
-## 打印链路
+### WorkBuddy 导出格式
 
-- 经典蓝牙 RFCOMM SPP；secure / insecure / channel-1 回退。
-- 384 dots / 48 bytes 每行。
-- 1024-byte 分包，约 1ms 包间隔。
-- 打印前状态预检、缺纸等故障提示、打印完成 ACK。
-- 纯 Java/Android SDK；源码不捆绑厂商 `.so` / `.aar`。
+```json
+[
+  {
+    "email": "63139186",
+    "uid": "abb90fa7-xxxx",
+    "expires_at": "2026-11-17 17:45:36",
+    "access_token": "eyJ...",
+    "refresh_token": "eyJ..."
+  }
+]
+```
 
-## Android
+### Cockpit Tools 格式
 
-- `minSdk 21`（Android 5.0）
-- `compileSdk 36`
-- `targetSdk 36`
-- 独立 applicationId：`com.yiran168.cuotiprint`
+```json
+[
+  {
+    "id": "workbuddy_xxxx",
+    "email": "63139186",
+    "uid": "abb90fa7-xxxx",
+    "access_token": "eyJ...",
+    "refresh_token": "eyJ...",
+    "token_type": "Bearer",
+    "expires_at": 1794908736,
+    "nickname": "63139186",
+    "created_at": 1791025393,
+    "last_used": 1791025393,
+    "status": "normal"
+  }
+]
+```
 
-## 构建
+### 字段映射
 
-仓库已包含 GitHub Actions：`.github/workflows/build-apk.yml`。
-推送到 `main` 后自动执行单元测试、Lint 和 Debug APK 构建，成功后在 Actions 的 Artifacts 下载：
+| WorkBuddy | Cockpit Tools | 说明 |
+|-----------|---------------|------|
+| `email` | `email` | 直接映射 |
+| `uid` | `uid` | 直接映射 |
+| `access_token` | `access_token` | 直接映射 |
+| `refresh_token` | `refresh_token` | 直接映射 |
+| `expires_at` (string) | `expires_at` (i64) | 日期字符串 ↔ Unix 时间戳 |
+| — | `id` | 自动生成 `workbuddy_` + MD5(uid/email) |
+| — | `token_type` | 固定 `"Bearer"` |
+| — | `nickname` | 取 `email` 值 |
+| — | `created_at` / `last_used` | 当前时间戳 |
+| — | `status` | 固定 `"normal"` |
 
-`CuotiPrint-Android-v1.5.1-full-debug`
+## Tech
 
-详见 `CODESPACES_UPDATE.md`。
+- 纯 HTML/CSS/JS，零依赖
+- 内置 MD5 实现（RFC 1321）
+- GitHub Pages 托管
+
+## License
+
+[MIT](LICENSE)
