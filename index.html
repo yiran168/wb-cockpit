@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>WorkBuddy ⇄ Cockpit Tools Converter</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+SC:wght@400;500;600;700;900&family=Noto+Sans+JP:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap');
@@ -95,7 +95,7 @@
     .particle {
       position: absolute;
       width: 4px; height: 4px;
-      background: rgba(167,139,250,0.5);
+      background: rgba(196,154,255,0.5);
       border-radius: 50%;
       animation: float linear infinite;
     }
@@ -162,7 +162,7 @@
       background: rgba(10,8,18,0.55);
       backdrop-filter: blur(28px) saturate(200%);
       -webkit-backdrop-filter: blur(28px) saturate(200%);
-      border-bottom: 1px solid rgba(139,92,246,0.1);
+      border-bottom: 1px solid rgba(157,107,255,0.1);
       padding: 0 32px;
       height: 68px;
       display: flex;
@@ -210,14 +210,14 @@
     }
     .nav-links a:hover {
       color: var(--text);
-      background: rgba(139,92,246,0.1);
+      background: rgba(157,107,255,0.1);
     }
 
     /* ── Language toggle ── */
     .lang-toggle {
       display: flex;
       gap: 0;
-      border: 1px solid rgba(139,92,246,0.15);
+      border: 1px solid rgba(157,107,255,0.15);
       border-radius: 8px;
       overflow: hidden;
       margin-left: 12px;
@@ -234,7 +234,7 @@
       color: var(--text-dim);
     }
     .lang-btn.active {
-      background: rgba(139,92,246,0.2);
+      background: rgba(157,107,255,0.2);
       color: var(--accent);
     }
 
@@ -432,25 +432,25 @@
     }
     .btn-primary:active { transform: translateY(0) scale(0.98); }
     .btn-secondary {
-      background: rgba(139,92,246,0.08);
+      background: rgba(157,107,255,0.08);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       color: var(--text);
-      border: 1px solid rgba(139,92,246,0.15);
+      border: 1px solid rgba(157,107,255,0.15);
     }
     .btn-secondary:hover {
-      background: rgba(139,92,246,0.15);
-      border-color: rgba(139,92,246,0.25);
+      background: rgba(157,107,255,0.15);
+      border-color: rgba(157,107,255,0.25);
       transform: translateY(-1px);
     }
     .btn-ghost {
       background: transparent;
       color: var(--text-dim);
-      border: 1px solid rgba(139,92,246,0.08);
+      border: 1px solid rgba(157,107,255,0.08);
     }
     .btn-ghost:hover {
       color: var(--text);
-      background: rgba(139,92,246,0.06);
+      background: rgba(157,107,255,0.06);
     }
 
     /* ── Main ── */
@@ -491,7 +491,7 @@
       align-items: center;
       gap: 10px;
       padding: 16px 28px;
-      border-bottom: 1px solid rgba(139,92,246,0.08);
+      border-bottom: 1px solid rgba(157,107,255,0.08);
       background: rgba(0,0,0,0.15);
     }
     .converter-header .dot {
@@ -517,7 +517,7 @@
       display: flex;
       gap: 0;
       margin-bottom: 28px;
-      border: 1px solid rgba(139,92,246,0.1);
+      border: 1px solid rgba(157,107,255,0.1);
       border-radius: var(--radius-sm);
       overflow: hidden;
       background: rgba(0,0,0,0.25);
@@ -541,15 +541,15 @@
       text-shadow: 0 1px 2px rgba(120,20,80,0.25);
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);
     }
-    .direction-btn:first-child { border-right: 1px solid rgba(139,92,246,0.1); }
+    .direction-btn:first-child { border-right: 1px solid rgba(157,107,255,0.1); }
     .direction-btn:not(.active):hover {
       color: var(--text);
-      background: rgba(139,92,246,0.08);
+      background: rgba(157,107,255,0.08);
     }
 
     /* ── Drop Zone ── */
     .drop-zone {
-      border: 2px dashed rgba(139,92,246,0.15);
+      border: 2px dashed rgba(157,107,255,0.15);
       border-radius: var(--radius);
       padding: 52px 24px;
       text-align: center;
@@ -564,7 +564,7 @@
       content: '';
       position: absolute;
       inset: 0;
-      background: radial-gradient(circle at center, rgba(139,92,246,0.06) 0%, transparent 70%);
+      background: radial-gradient(circle at center, rgba(157,107,255,0.06) 0%, transparent 70%);
       opacity: 0;
       transition: opacity 0.3s;
     }
@@ -572,15 +572,15 @@
     .drop-zone.dragging::before { opacity: 1; }
     .drop-zone:hover,
     .drop-zone.dragging {
-      border-color: rgba(167,139,250,0.4);
-      background: rgba(139,92,246,0.04);
+      border-color: rgba(196,154,255,0.4);
+      background: rgba(157,107,255,0.04);
     }
     .drop-zone .upload-icon {
       width: 52px; height: 52px;
       margin: 0 auto 16px;
       border-radius: 14px;
-      background: rgba(139,92,246,0.08);
-      border: 1px solid rgba(139,92,246,0.12);
+      background: rgba(157,107,255,0.08);
+      border: 1px solid rgba(157,107,255,0.12);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -599,7 +599,7 @@
       width: 100%;
       min-height: 180px;
       background: rgba(0,0,0,0.25);
-      border: 1px solid rgba(139,92,246,0.08);
+      border: 1px solid rgba(157,107,255,0.08);
       border-radius: var(--radius-sm);
       color: var(--text);
       font-family: var(--font-mono);
@@ -612,8 +612,8 @@
       margin-bottom: 18px;
     }
     textarea:focus {
-      border-color: rgba(167,139,250,0.35);
-      box-shadow: 0 0 0 4px rgba(139,92,246,0.06);
+      border-color: rgba(196,154,255,0.35);
+      box-shadow: 0 0 0 4px rgba(157,107,255,0.06);
     }
     textarea::placeholder { color: var(--text-faint); }
 
@@ -693,7 +693,7 @@
       position: absolute;
       top: 0; left: 0; right: 0;
       height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(167,139,250,0.2), transparent);
+      background: linear-gradient(90deg, transparent, rgba(196,154,255,0.2), transparent);
     }
     .info-card:hover {
       border-color: rgba(255,122,217,0.3);
@@ -764,7 +764,7 @@
       transition: transform 0.25s;
     }
     .format-section[open] summary::after { transform: rotate(-135deg); }
-    .format-section summary:hover { background: rgba(139,92,246,0.05); }
+    .format-section summary:hover { background: rgba(157,107,255,0.05); }
     .format-content {
       padding: 0 32px 32px;
       display: grid;
@@ -780,7 +780,7 @@
     }
     .format-block pre {
       background: rgba(0,0,0,0.25);
-      border: 1px solid rgba(139,92,246,0.06);
+      border: 1px solid rgba(157,107,255,0.06);
       border-radius: 10px;
       padding: 16px;
       font-family: var(--font-mono);
@@ -821,7 +821,7 @@
       z-index: 2;
       text-align: center;
       padding: 40px 24px;
-      border-top: 1px solid rgba(139,92,246,0.08);
+      border-top: 1px solid rgba(157,107,255,0.08);
       color: var(--text-faint);
       font-size: 0.78rem;
     }
@@ -832,7 +832,7 @@
       margin: 0 8px;
     }
     footer a:hover { color: var(--accent); }
-    footer .separator { color: rgba(139,92,246,0.15); }
+    footer .separator { color: rgba(157,107,255,0.15); }
 
     /* ── Responsive ── */
     @media (max-width: 960px) {
@@ -938,12 +938,12 @@
     </div>
     <div class="converter-body">
 
-      <!-- Direction -->
-      <div class="direction-toggle">
-        <button class="direction-btn active" id="btnWb2Cockpit" onclick="setDirection('wb2cockpit')">
+      <!-- Direction (indicator — conversion auto-detects) -->
+      <div class="direction-toggle" role="tablist" aria-label="Conversion direction">
+        <button class="direction-btn active" id="btnWb2Cockpit" onclick="setDirection('wb2cockpit')" type="button">
           <span data-i18n="conv.wb2cockpit">WorkBuddy → Cockpit Tools</span>
         </button>
-        <button class="direction-btn" id="btnCockpit2Wb" onclick="setDirection('cockpit2wb')">
+        <button class="direction-btn" id="btnCockpit2Wb" onclick="setDirection('cockpit2wb')" type="button">
           <span data-i18n="conv.cockpit2wb">Cockpit Tools → WorkBuddy</span>
         </button>
       </div>
@@ -971,7 +971,7 @@
 
       <!-- Result -->
       <div class="result-area" id="resultArea">
-        <div class="result-label" id="resultLabel" data-i18n="result.success">转换成功</div>
+        <div class="result-label" id="resultLabel"></div>
         <textarea id="outputArea" readonly spellcheck="false" style="min-height:220px;"></textarea>
         <div class="actions" style="margin-top:16px;">
           <button class="btn btn-primary btn-sm" onclick="copyResult()" data-i18n="btn.copy">复制结果</button>
@@ -1078,6 +1078,8 @@
       "result.cockpit2wb": "转换成功：Cockpit Tools → WorkBuddy",
       "error.empty": "请输入 JSON 内容",
       "error.fileType": "请选择 JSON 文件",
+      "error.invalidJson": "JSON 解析失败，请检查格式是否正确",
+      "error.unrecognized": "无法识别的格式：既不是 WorkBuddy 导出，也不是 Cockpit Tools 导出",
       "toast.copied": "已复制到剪贴板",
       "card1.title": "隐私优先",
       "card1.desc": "所有转换在浏览器本地完成。你的 access_token 和 refresh_token 不会发送到任何服务器。",
@@ -1114,6 +1116,8 @@
       "result.cockpit2wb": "Converted: Cockpit Tools → WorkBuddy",
       "error.empty": "Please enter JSON content",
       "error.fileType": "Please select a JSON file",
+      "error.invalidJson": "Failed to parse JSON. Please check the syntax.",
+      "error.unrecognized": "Unrecognized format: neither a WorkBuddy export nor a Cockpit Tools export.",
       "toast.copied": "Copied to clipboard",
       "card1.title": "Privacy First",
       "card1.desc": "All conversion happens locally in your browser. Access tokens and refresh tokens are never sent to any server.",
@@ -1126,9 +1130,14 @@
   };
 
   let currentLang = "zh";
+  try {
+    const saved = localStorage.getItem("wb-converter-lang");
+    if (saved === "zh" || saved === "en") currentLang = saved;
+  } catch (e) { /* private mode */ }
 
   function setLang(lang) {
     currentLang = lang;
+    try { localStorage.setItem("wb-converter-lang", lang); } catch (e) { /* private mode */ }
     document.getElementById("btnZh").classList.toggle("active", lang === "zh");
     document.getElementById("btnEn").classList.toggle("active", lang === "en");
     document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
@@ -1142,6 +1151,11 @@
       const key = el.getAttribute("data-i18n-ph");
       if (I18N[lang][key]) el.placeholder = I18N[lang][key];
     });
+
+    // Re-render dynamic strings that are not data-i18n bound
+    if (lastDirection && document.getElementById("resultArea").classList.contains("visible")) {
+      renderResultLabel();
+    }
   }
 
   function t(key) {
@@ -1201,12 +1215,13 @@
   let currentDirection = "wb2cockpit";
   let lastOutput = "";
   let lastDirection = "";
+  let lastCount = 0;
 
   function setDirection(dir) {
+    // Toggle is an indicator of the detected direction; conversion always auto-detects.
     currentDirection = dir;
     document.getElementById("btnWb2Cockpit").classList.toggle("active", dir === "wb2cockpit");
     document.getElementById("btnCockpit2Wb").classList.toggle("active", dir === "cockpit2wb");
-    clearAll();
   }
 
   // ── File upload ──
@@ -1223,7 +1238,8 @@
   fileInput.addEventListener("change", () => { if (fileInput.files[0]) readFile(fileInput.files[0]); });
 
   function readFile(file) {
-    if (!file.name.endsWith(".json") && file.type !== "application/json") {
+    var name = (file.name || "").toLowerCase();
+    if (!name.endsWith(".json") && file.type !== "application/json") {
       showError(t("error.fileType"));
       return;
     }
@@ -1233,12 +1249,17 @@
   }
 
   // ── Convert ──
+  function localizeError(msg) {
+    if (!msg) return msg;
+    if (msg.indexOf("Invalid JSON") === 0) return t("error.invalidJson");
+    if (msg.indexOf("Unrecognized format") === 0) return t("error.unrecognized");
+    return msg;
+  }
+
   function doConvert() {
     const input = document.getElementById("inputArea").value.trim();
     const errorDiv = document.getElementById("errorMsg");
     const resultDiv = document.getElementById("resultArea");
-    const resultLabel = document.getElementById("resultLabel");
-    const outputArea = document.getElementById("outputArea");
 
     errorDiv.classList.remove("visible");
     resultDiv.classList.remove("visible");
@@ -1247,20 +1268,23 @@
 
     const result = WorkBuddyConverter.convert(input);
 
-    if (result.error) { showError(result.error); return; }
+    if (result.error) { showError(localizeError(result.error)); return; }
 
     lastOutput = JSON.stringify(result.data, null, 2);
     lastDirection = result.direction;
-    outputArea.value = lastOutput;
-
-    if (result.direction === "wb2cockpit") {
-      resultLabel.textContent = `${t("result.wb2cockpit")} (${result.data.length} ${currentLang === "zh" ? "个账号" : "accounts"})`;
-    } else {
-      resultLabel.textContent = `${t("result.cockpit2wb")} (${result.data.length} ${currentLang === "zh" ? "个账号" : "accounts"})`;
-    }
+    lastCount = result.data.length;
+    document.getElementById("outputArea").value = lastOutput;
+    setDirection(result.direction);
+    renderResultLabel();
 
     resultDiv.classList.add("visible");
     resultDiv.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
+  function renderResultLabel() {
+    const key = lastDirection === "wb2cockpit" ? "result.wb2cockpit" : "result.cockpit2wb";
+    const unit = currentLang === "zh" ? "个账号" : (lastCount === 1 ? "account" : "accounts");
+    document.getElementById("resultLabel").textContent = `${t(key)} (${lastCount} ${unit})`;
   }
 
   function showError(msg) {
@@ -1277,11 +1301,28 @@
     fileInput.value = "";
     lastOutput = "";
     lastDirection = "";
+    lastCount = 0;
   }
 
   function copyResult() {
     if (!lastOutput) return;
-    navigator.clipboard.writeText(lastOutput).then(() => showToast());
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(lastOutput).then(showToast, function () { legacyCopy(); });
+    } else {
+      legacyCopy();
+    }
+  }
+
+  // Fallback for older mobile browsers without the async Clipboard API
+  function legacyCopy() {
+    const ta = document.getElementById("outputArea");
+    ta.removeAttribute("readonly");
+    ta.select();
+    try { ta.setSelectionRange(0, ta.value.length); } catch (e) { /* iOS quirks */ }
+    let done = false;
+    try { done = document.execCommand("copy"); } catch (e) { done = false; }
+    ta.setAttribute("readonly", "");
+    if (done) showToast();
   }
 
   function downloadResult() {
@@ -1305,8 +1346,8 @@
     setTimeout(() => toast.classList.remove("visible"), 2000);
   }
 
-  // Initialize
-  setLang("zh");
+  // Initialize with saved language preference (defaults to zh)
+  setLang(currentLang);
 </script>
 
 </body>

@@ -30,7 +30,7 @@
   function normalizeToMs(value) {
     if (value === null || value === undefined) return null;
     if (typeof value === "number" && !isNaN(value)) {
-      return value > MS_THRESHOLD ? Math.floor(value) : value * 1000;
+      return value > MS_THRESHOLD ? Math.floor(value) : Math.floor(value * 1000);
     }
     if (typeof value === "string") {
       var trimmed = value.trim();
@@ -38,6 +38,11 @@
       if (/^\d+$/.test(trimmed)) {
         var n = parseInt(trimmed, 10);
         return n > MS_THRESHOLD ? n : n * 1000;
+      }
+      // ISO strings with explicit timezone (Z or ±hh:mm) must NOT be parsed as local time
+      if (/[zZ]$|[+-]\d{2}:?\d{2}$/.test(trimmed)) {
+        var zoned = Date.parse(trimmed);
+        return isNaN(zoned) ? null : Math.floor(zoned);
       }
       var parsed = parseDateStringToTs(trimmed);
       if (parsed !== null) return parsed * 1000;
@@ -203,8 +208,9 @@
     if ("created_at" in item) return true;
     if ("token_type" in item) return true;
     if ("nickname" in item) return true;
-    // Has numeric expires_at (Cockpit uses Unix timestamps)
-    if ("expires_at" in item && typeof item.expires_at === "number") return true;
+    // Has numeric expires_at (Cockpit uses Unix timestamps; number or numeric string)
+    if ("expires_at" in item && item.expires_at !== null &&
+        (typeof item.expires_at === "number" || /^\d+$/.test(String(item.expires_at).trim()))) return true;
     return false;
   }
 
@@ -229,6 +235,7 @@
   // ── WorkBuddy -> Cockpit Tools ───────────────────────────
 
   function nonEmpty(value) {
+    if (typeof value === "number" && isFinite(value)) value = String(value);
     if (typeof value !== "string") return null;
     var t = value.trim();
     return t ? t : null;
@@ -264,11 +271,12 @@
         usedIds[id] = 1;
       }
       var ms = normalizeToMs(item.expires_at);
+      var email = nonEmpty(item.email);
 
       var account = {
         id: id,
-        email: typeof item.email === "string" ? item.email : "",
-        access_token: typeof item.access_token === "string" ? item.access_token : "",
+        email: email || "",
+        access_token: nonEmpty(item.access_token) || "",
         token_type: "Bearer",
         created_at: now,
         last_used: now,
@@ -279,7 +287,6 @@
       var rt = nonEmpty(item.refresh_token);
       if (rt) account.refresh_token = rt;
       if (ms !== null) account.expires_at = ms;
-      var email = nonEmpty(item.email);
       if (email) account.nickname = email;
 
       return account;

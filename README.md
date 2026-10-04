@@ -96,7 +96,7 @@ const result = WorkBuddyConverter.convert(jsonString);
     "access_token": "eyJ...",
     "refresh_token": "eyJ...",
     "token_type": "Bearer",
-    "expires_at": 1794908736,
+    "expires_at": 1794908736000,
     "nickname": "63139186",
     "created_at": 1791025393,
     "last_used": 1791025393,
@@ -113,11 +113,11 @@ const result = WorkBuddyConverter.convert(jsonString);
 | `uid` | `uid` | 直接映射 / Direct mapping |
 | `access_token` | `access_token` | 直接映射 / Direct mapping |
 | `refresh_token` | `refresh_token` | 直接映射 / Direct mapping |
-| `expires_at` (string) | `expires_at` (i64) | 日期字符串 ↔ Unix 时间戳 / Date string ↔ Unix timestamp |
-| — | `id` | 自动生成 `workbuddy_` + MD5(uid/email) / Auto-generated |
+| `expires_at` (string) | `expires_at` (i64) | 日期字符串 ↔ Unix 毫秒时间戳 / Date string ↔ Unix timestamp (ms) |
+| — | `id` | `workbuddy_` + MD5(uid 小写；无 uid 时用含 @ 的小写 email) / MD5 of lowercased uid, else lowercased email with @ |
 | — | `token_type` | 固定 `"Bearer"` / Fixed `"Bearer"` |
 | — | `nickname` | 取 `email` 值 / Uses `email` value |
-| — | `created_at` / `last_used` | 当前时间戳 / Current timestamp |
+| — | `created_at` / `last_used` | 当前 Unix 秒时间戳 / Current Unix timestamp (seconds) |
 | — | `status` | 固定 `"normal"` / Fixed `"normal"` |
 
 ---
