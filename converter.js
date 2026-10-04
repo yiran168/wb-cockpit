@@ -10,6 +10,43 @@
 
   function pad2(n) { return n < 10 ? "0" + n : "" + n; }
 
+  var MS_THRESHOLD = 1e11; // ~ year 5138 in seconds; anything above is milliseconds
+
+  /**
+   * Normalize a Unix timestamp to SECONDS.
+   * Cockpit stores expires_at in milliseconds; created_at/last_used in seconds.
+   * Heuristic mirrors Cockpit's token_expiry_at: value < 1e11 => seconds.
+   */
+  function normalizeToSeconds(ts) {
+    if (typeof ts === "string" && /^\d+$/.test(ts.trim())) ts = parseInt(ts.trim(), 10);
+    if (typeof ts !== "number" || isNaN(ts)) return null;
+    return ts > MS_THRESHOLD ? Math.floor(ts / 1000) : Math.floor(ts);
+  }
+
+  /**
+   * Normalize any expires_at-ish value (number, numeric string, date string)
+   * to milliseconds. Returns null on failure.
+   */
+  function normalizeToMs(value) {
+    if (value === null || value === undefined) return null;
+    if (typeof value === "number" && !isNaN(value)) {
+      return value > MS_THRESHOLD ? Math.floor(value) : value * 1000;
+    }
+    if (typeof value === "string") {
+      var trimmed = value.trim();
+      if (!trimmed) return null;
+      if (/^\d+$/.test(trimmed)) {
+        var n = parseInt(trimmed, 10);
+        return n > MS_THRESHOLD ? n : n * 1000;
+      }
+      var parsed = parseDateStringToTs(trimmed);
+      if (parsed !== null) return parsed * 1000;
+      var iso = Date.parse(trimmed);
+      if (!isNaN(iso)) return Math.floor(iso);
+    }
+    return null;
+  }
+
   /**
    * Parse "YYYY-MM-DD HH:MM:SS" -> Unix timestamp (seconds).
    * Treats input as local time (not UTC) to match WorkBuddy behavior.
@@ -26,10 +63,14 @@
   }
 
   /**
-   * Unix timestamp (seconds) -> "YYYY-MM-DD HH:MM:SS" (local time).
+   * Unix timestamp (seconds or milliseconds, number or numeric string)
+   * -> "YYYY-MM-DD HH:MM:SS" (local time).
    */
   function tsToDateString(ts) {
-    var d = new Date(ts * 1000);
+    var seconds = normalizeToSeconds(ts);
+    if (seconds === null) return null;
+    var d = new Date(seconds * 1000);
+    if (isNaN(d.getTime())) return null;
     return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()) +
       " " + pad2(d.getHours()) + ":" + pad2(d.getMinutes()) + ":" + pad2(d.getSeconds());
   }
@@ -135,6 +176,9 @@
     if (!("access_token" in item)) return false;
     // WorkBuddy: expires_at is a date string with dashes
     if ("expires_at" in item && typeof item.expires_at === "string" && item.expires_at.indexOf("-") !== -1) return true;
+    // expires_at present as a number (or numeric string) => Cockpit Unix ts, not WorkBuddy
+    if ("expires_at" in item && item.expires_at !== null &&
+        (typeof item.expires_at === "number" || /^\d+$/.test(String(item.expires_at).trim()))) return false;
     // Has email + uid but no Cockpit-specific fields
     if ("email" in item && "uid" in item &&
         !("id" in item) && !("auth_raw" in item) && !("created_at" in item) && !("token_type" in item)) return true;
@@ -184,26 +228,59 @@
 
   // ── WorkBuddy -> Cockpit Tools ───────────────────────────
 
+  function nonEmpty(value) {
+    if (typeof value !== "string") return null;
+    var t = value.trim();
+    return t ? t : null;
+  }
+
+  /**
+   * Identity seed — replicates Cockpit Tools' own algorithm
+   * (workbuddy_account.rs): uid (trimmed, lowercased) first; otherwise email
+   * (trimmed, lowercased) ONLY when it contains '@'; otherwise "workbuddy_user".
+   */
+  function identitySeed(item) {
+    var uid = nonEmpty(item.uid);
+    if (uid) return uid.toLowerCase();
+    var email = nonEmpty(item.email);
+    if (email) {
+      var lowered = email.toLowerCase();
+      if (lowered.indexOf("@") !== -1) return lowered;
+    }
+    return "workbuddy_user";
+  }
+
   function workbuddyToCockpit(wbArray) {
     var now = Math.floor(Date.now() / 1000);
-    return wbArray.map(function (item, idx) {
-      var identity = item.uid || item.email || "workbuddy_user_" + idx;
-      var id = "workbuddy_" + md5(identity);
-      var ts = parseDateStringToTs(item.expires_at);
+    var usedIds = {};
+    return wbArray.map(function (item) {
+      var id = "workbuddy_" + md5(identitySeed(item));
+      // Keep IDs unique within the batch (Cockpit would collapse identical seeds)
+      if (usedIds[id]) {
+        var n = usedIds[id] + 1;
+        usedIds[id] = n;
+        id = id + "_" + n;
+      } else {
+        usedIds[id] = 1;
+      }
+      var ms = normalizeToMs(item.expires_at);
 
       var account = {
         id: id,
-        email: item.email || "",
-        access_token: item.access_token || "",
-        refresh_token: item.refresh_token || null,
+        email: typeof item.email === "string" ? item.email : "",
+        access_token: typeof item.access_token === "string" ? item.access_token : "",
         token_type: "Bearer",
-        expires_at: ts,
-        nickname: item.email || null,
         created_at: now,
         last_used: now,
         status: "normal"
       };
-      if (item.uid) account.uid = item.uid;
+      var uid = nonEmpty(item.uid);
+      if (uid) account.uid = uid;
+      var rt = nonEmpty(item.refresh_token);
+      if (rt) account.refresh_token = rt;
+      if (ms !== null) account.expires_at = ms;
+      var email = nonEmpty(item.email);
+      if (email) account.nickname = email;
 
       return account;
     });
@@ -214,11 +291,14 @@
   function cockpitToWorkbuddy(cockpitArray) {
     return cockpitArray.map(function (item) {
       var result = {};
-      if (item.email) result.email = item.email;
-      if (item.uid) result.uid = item.uid;
-      if (item.expires_at) result.expires_at = tsToDateString(item.expires_at);
-      if (item.access_token) result.access_token = item.access_token;
-      if (item.refresh_token) result.refresh_token = item.refresh_token;
+      if (nonEmpty(item.email)) result.email = item.email;
+      if (nonEmpty(item.uid)) result.uid = item.uid;
+      if (item.expires_at !== null && item.expires_at !== undefined) {
+        var dateStr = tsToDateString(item.expires_at);
+        if (dateStr !== null) result.expires_at = dateStr;
+      }
+      if (nonEmpty(item.access_token)) result.access_token = item.access_token;
+      if (nonEmpty(item.refresh_token)) result.refresh_token = item.refresh_token;
       return result;
     });
   }
@@ -229,6 +309,12 @@
     var parsed;
     try { parsed = JSON.parse(jsonString); }
     catch (e) { return { error: "Invalid JSON: " + e.message }; }
+
+    // Unwrap { accounts: [...] } / { items: [...] } (Cockpit import supports these too)
+    if (!Array.isArray(parsed) && typeof parsed === "object" && parsed !== null) {
+      if (Array.isArray(parsed.accounts)) parsed = parsed.accounts;
+      else if (Array.isArray(parsed.items)) parsed = parsed.items;
+    }
 
     // Handle single object (wrap in array)
     if (!Array.isArray(parsed) && typeof parsed === "object" && parsed !== null) {
@@ -248,6 +334,7 @@
 
   var api = { convert: convert, workbuddyToCockpit: workbuddyToCockpit, cockpitToWorkbuddy: cockpitToWorkbuddy,
               parseDateStringToTs: parseDateStringToTs, tsToDateString: tsToDateString, md5: md5,
+              identitySeed: identitySeed, normalizeToMs: normalizeToMs, normalizeToSeconds: normalizeToSeconds,
               isWorkBuddyItem: isWorkBuddyItem, isCockpitItem: isCockpitItem };
 
   if (typeof module !== "undefined" && module.exports) module.exports = api;

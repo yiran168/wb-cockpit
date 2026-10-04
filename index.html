@@ -5,29 +5,33 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>WorkBuddy ⇄ Cockpit Tools Converter</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+SC:wght@400;500;600;700;900&family=Noto+Sans+JP:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap');
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #0a0812;
-      --glass: rgba(20,16,35,0.55);
-      --glass-strong: rgba(30,24,50,0.65);
-      --glass-border: rgba(139,92,246,0.15);
-      --glass-hover: rgba(139,92,246,0.2);
-      --text: #ece9f5;
-      --text-dim: rgba(236,233,245,0.6);
-      --text-faint: rgba(236,233,245,0.35);
-      --accent: #a78bfa;
-      --accent2: #8b5cf6;
-      --accent3: #c084fc;
-      --pink: #f472b6;
-      --green: #4ade80;
-      --red: #f87171;
-      --radius: 20px;
-      --radius-sm: 12px;
+      --bg: #0d0818;
+      --glass: rgba(26,18,46,0.5);
+      --glass-strong: rgba(36,26,62,0.62);
+      --glass-border: rgba(196,146,255,0.18);
+      --glass-hover: rgba(196,146,255,0.26);
+      --text: #f3efff;
+      --text-dim: rgba(243,239,255,0.62);
+      --text-faint: rgba(243,239,255,0.38);
+      --accent: #c49aff;
+      --accent2: #9d6bff;
+      --accent3: #e0b3ff;
+      --pink: #ff7ad9;
+      --pink-hot: #ff5cb8;
+      --cyan: #6fe3ff;
+      --gold: #ffd66e;
+      --green: #5cf2a4;
+      --red: #ff7a8a;
+      --radius: 22px;
+      --radius-sm: 13px;
       --font-mono: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
       --font-sans: "Inter", "Noto Sans SC", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --font-jp: "Noto Sans JP", "Noto Sans SC", sans-serif;
     }
 
     html { scroll-behavior: smooth; }
@@ -43,30 +47,39 @@
       position: relative;
     }
 
-    /* ── Anime background layer ── */
+    /* ── Anime background layer ──
+       position:fixed + background-size:cover is the ONLY cross-browser
+       reliable approach: absolute+200vh breaks on long pages and mobile
+       Safari tiles/visible-seam issues; background-attachment:fixed is
+       ignored on iOS. A fixed full-viewport layer always shows. */
     .anime-bg {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%;
-      height: 200vh;
+      position: fixed;
+      inset: 0;
       z-index: 0;
-      background: url('bg-anime.jpg') center top / 100% auto repeat-y;
-      opacity: 0.22;
+      background: url('bg-anime.jpg') center 30% / cover no-repeat;
+      opacity: 0.5;
       pointer-events: none;
+      transform: translateZ(0);
     }
     .anime-bg-overlay {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%;
-      height: 200vh;
+      position: fixed;
+      inset: 0;
       z-index: 0;
       background: linear-gradient(
         180deg,
-        rgba(10,8,18,0.15) 0%,
-        rgba(10,8,18,0.4) 30%,
-        rgba(10,8,18,0.6) 60%,
-        rgba(10,8,18,0.8) 100%
+        rgba(13,8,24,0.35) 0%,
+        rgba(13,8,24,0.55) 35%,
+        rgba(13,8,24,0.78) 70%,
+        rgba(13,8,24,0.92) 100%
       );
+      pointer-events: none;
+    }
+    /* soft vignette for cinematic feel */
+    .anime-bg-vignette {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background: radial-gradient(ellipse at center, transparent 55%, rgba(8,5,16,0.5) 100%);
       pointer-events: none;
     }
 
@@ -104,16 +117,41 @@
     }
     .petal {
       position: absolute;
-      width: 10px; height: 10px;
-      background: rgba(244,114,182,0.25);
-      border-radius: 80% 0 80% 0;
+      width: 12px; height: 12px;
+      background: linear-gradient(135deg, rgba(255,154,217,0.85) 0%, rgba(255,110,199,0.55) 100%);
+      border-radius: 100% 4% 100% 4%;
+      box-shadow: 0 0 6px rgba(255,122,217,0.35);
       animation: petalFall linear infinite;
     }
     @keyframes petalFall {
-      0% { transform: translateY(-5vh) translateX(0) rotate(0deg); opacity: 0; }
-      10% { opacity: 0.6; }
-      90% { opacity: 0.6; }
-      100% { transform: translateY(105vh) translateX(50px) rotate(360deg); opacity: 0; }
+      0%   { transform: translateY(-6vh) translateX(0) rotate(0deg); opacity: 0; }
+      8%   { opacity: 0.9; }
+      25%  { transform: translateY(20vh) translateX(28px) rotate(120deg); }
+      50%  { transform: translateY(48vh) translateX(-18px) rotate(240deg); }
+      75%  { transform: translateY(76vh) translateX(32px) rotate(330deg); }
+      92%  { opacity: 0.8; }
+      100% { transform: translateY(106vh) translateX(-8px) rotate(420deg); opacity: 0; }
+    }
+
+    /* ── Twinkling sparkles ── */
+    .sparkles {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .sparkle {
+      position: absolute;
+      color: rgba(255,235,250,0.9);
+      text-shadow: 0 0 8px rgba(255,170,230,0.8), 0 0 18px rgba(196,154,255,0.5);
+      animation: twinkle ease-in-out infinite;
+      font-size: 12px;
+      line-height: 1;
+    }
+    @keyframes twinkle {
+      0%, 100% { opacity: 0; transform: scale(0.4) rotate(0deg); }
+      50% { opacity: 1; transform: scale(1) rotate(90deg); }
     }
 
     /* ── Nav ── */
@@ -133,9 +171,9 @@
     }
     .nav-logo {
       font-size: 0.95rem;
-      font-weight: 700;
+      font-weight: 800;
       letter-spacing: -0.3px;
-      background: linear-gradient(135deg, var(--accent) 0%, var(--pink) 100%);
+      background: linear-gradient(120deg, var(--accent) 0%, var(--pink) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -145,15 +183,15 @@
       gap: 10px;
     }
     .nav-logo-icon {
-      width: 34px; height: 34px;
-      border-radius: 10px;
-      background: linear-gradient(135deg, var(--accent2) 0%, var(--pink) 100%);
+      width: 36px; height: 36px;
+      border-radius: 11px;
+      background: linear-gradient(135deg, var(--accent2) 0%, var(--pink-hot) 100%);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.95rem;
+      font-size: 1rem;
       -webkit-text-fill-color: white;
-      box-shadow: 0 0 20px rgba(139,92,246,0.3);
+      box-shadow: 0 0 22px rgba(255,92,184,0.35), inset 0 1px 0 rgba(255,255,255,0.25);
     }
     .nav-links {
       display: flex;
@@ -204,98 +242,121 @@
     .hero {
       position: relative;
       z-index: 2;
-      padding: 140px 24px 80px;
+      padding: 148px 24px 90px;
       display: grid;
-      grid-template-columns: 1fr 320px;
-      gap: 48px;
-      max-width: 1100px;
+      grid-template-columns: 1.15fr 340px;
+      gap: 56px;
+      max-width: 1120px;
       margin: 0 auto;
       align-items: center;
     }
-    @media (max-width: 800px) {
-      .hero { grid-template-columns: 1fr; text-align: center; }
+    @media (max-width: 860px) {
+      .hero { grid-template-columns: 1fr; text-align: center; gap: 40px; padding: 128px 20px 64px; }
     }
     .hero-content { text-align: left; }
-    @media (max-width: 800px) { .hero-content { text-align: center; } }
+    @media (max-width: 860px) { .hero-content { text-align: center; } }
 
     .hero-badge {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      background: rgba(139,92,246,0.1);
+      gap: 9px;
+      background: rgba(157,107,255,0.12);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(139,92,246,0.2);
-      color: var(--accent);
+      border: 1px solid rgba(196,154,255,0.28);
+      color: var(--accent3);
       padding: 8px 18px;
       border-radius: 30px;
       font-size: 0.72rem;
-      font-weight: 600;
-      letter-spacing: 1px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
       text-transform: uppercase;
-      margin-bottom: 28px;
+      margin-bottom: 26px;
+      box-shadow: 0 0 24px rgba(157,107,255,0.12);
     }
     .hero-badge .pulse {
       width: 7px; height: 7px;
       border-radius: 50%;
       background: var(--green);
-      box-shadow: 0 0 10px rgba(74,222,128,0.5);
+      box-shadow: 0 0 10px rgba(92,242,164,0.7);
       animation: pulse 2s ease-in-out infinite;
     }
     @keyframes pulse {
       0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.6; transform: scale(0.85); }
+      50% { opacity: 0.55; transform: scale(0.8); }
     }
     .hero h1 {
-      font-size: clamp(2.2rem, 5vw, 3.6rem);
-      font-weight: 800;
-      letter-spacing: -2.5px;
-      line-height: 1.1;
-      margin-bottom: 20px;
+      font-size: clamp(2.3rem, 5.4vw, 3.8rem);
+      font-weight: 900;
+      letter-spacing: -2px;
+      line-height: 1.12;
+      margin-bottom: 6px;
     }
     .hero h1 .gradient-text {
-      background: linear-gradient(135deg, var(--accent) 0%, var(--pink) 100%);
+      background: linear-gradient(120deg, var(--accent) 0%, var(--pink) 55%, var(--gold) 110%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
+      filter: drop-shadow(0 0 22px rgba(255,122,217,0.28));
     }
     .hero h1 .arrow-icon {
       display: inline-block;
-      margin: 0 6px;
-      animation: slideArrow 2.5s ease-in-out infinite;
-      background: linear-gradient(135deg, var(--accent), var(--pink));
+      margin: 0 8px;
+      animation: slideArrow 2.4s ease-in-out infinite;
+      background: linear-gradient(135deg, var(--cyan), var(--accent));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
     @keyframes slideArrow {
-      0%, 100% { transform: translateX(0); opacity: 0.7; }
-      50% { transform: translateX(8px); opacity: 1; }
+      0%, 100% { transform: translateX(0) scale(1); opacity: 0.75; }
+      50% { transform: translateX(9px) scale(1.12); opacity: 1; }
+    }
+    .hero .jp-sub {
+      font-family: var(--font-jp);
+      font-size: clamp(0.85rem, 1.6vw, 1.05rem);
+      font-weight: 700;
+      letter-spacing: 4px;
+      color: var(--text-faint);
+      margin-bottom: 20px;
+    }
+    .hero .jp-sub .kira {
+      color: var(--gold);
+      text-shadow: 0 0 12px rgba(255,214,110,0.6);
+      margin: 0 6px;
+      font-size: 0.8em;
     }
     .hero p {
       font-size: 1.02rem;
       color: var(--text-dim);
-      margin-bottom: 32px;
-      line-height: 1.8;
+      margin-bottom: 34px;
+      line-height: 1.85;
+      max-width: 560px;
     }
+    @media (max-width: 860px) { .hero p { margin-left: auto; margin-right: auto; } }
     .hero-btns {
       display: flex;
       gap: 14px;
       flex-wrap: wrap;
     }
-    @media (max-width: 800px) { .hero-btns { justify-content: center; } }
+    @media (max-width: 860px) { .hero-btns { justify-content: center; } }
 
+    /* ── Hero illustration: anime poster card ── */
     .hero-image {
       position: relative;
       border-radius: var(--radius);
       overflow: hidden;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.4), 0 0 40px rgba(139,92,246,0.1);
-      border: 1px solid rgba(139,92,246,0.15);
+      box-shadow:
+        0 24px 70px rgba(0,0,0,0.5),
+        0 0 50px rgba(255,122,217,0.14),
+        0 0 90px rgba(157,107,255,0.1);
+      border: 1px solid rgba(196,154,255,0.22);
       animation: heroFloat 6s ease-in-out infinite;
+      transform: rotate(1.2deg);
     }
     @keyframes heroFloat {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-8px); }
+      0%, 100% { transform: translateY(0) rotate(1.2deg); }
+      50% { transform: translateY(-10px) rotate(0.6deg); }
     }
     .hero-image img {
       width: 100%;
@@ -307,9 +368,31 @@
       content: '';
       position: absolute;
       inset: 0;
-      background: linear-gradient(180deg, transparent 60%, rgba(10,8,18,0.5) 100%);
+      background: linear-gradient(180deg, transparent 55%, rgba(13,8,24,0.55) 100%);
     }
-    @media (max-width: 800px) { .hero-image { display: none; } }
+    /* anime poster corner ribbon */
+    .hero-image .ribbon {
+      position: absolute;
+      top: 14px; left: 14px;
+      z-index: 2;
+      background: linear-gradient(135deg, var(--pink-hot), var(--accent2));
+      color: #fff;
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      box-shadow: 0 4px 16px rgba(255,92,184,0.4);
+      font-family: var(--font-jp);
+    }
+    @media (max-width: 860px) {
+      .hero-image {
+        display: block;
+        max-width: 300px;
+        margin: 0 auto;
+        transform: rotate(0.8deg);
+      }
+    }
 
     /* ── Buttons ── */
     .btn {
@@ -338,14 +421,16 @@
     }
     .btn:hover::after { opacity: 1; }
     .btn-primary {
-      background: linear-gradient(135deg, var(--accent2) 0%, var(--pink) 100%);
+      background: linear-gradient(135deg, var(--accent2) 0%, var(--pink-hot) 100%);
       color: #fff;
-      box-shadow: 0 4px 20px rgba(139,92,246,0.25), inset 0 1px 0 rgba(255,255,255,0.1);
+      box-shadow: 0 6px 24px rgba(255,92,184,0.3), inset 0 1px 0 rgba(255,255,255,0.22);
+      text-shadow: 0 1px 2px rgba(120,20,80,0.3);
     }
     .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 40px rgba(139,92,246,0.35), inset 0 1px 0 rgba(255,255,255,0.15);
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 14px 44px rgba(255,92,184,0.42), inset 0 1px 0 rgba(255,255,255,0.28);
     }
+    .btn-primary:active { transform: translateY(0) scale(0.98); }
     .btn-secondary {
       background: rgba(139,92,246,0.08);
       backdrop-filter: blur(16px);
@@ -386,10 +471,20 @@
       border-radius: var(--radius);
       overflow: hidden;
       margin-bottom: 24px;
+      position: relative;
       box-shadow:
-        0 8px 32px rgba(0,0,0,0.3),
-        0 1px 0 rgba(255,255,255,0.05) inset,
-        0 -1px 0 rgba(0,0,0,0.1) inset;
+        0 10px 40px rgba(0,0,0,0.35),
+        0 0 60px rgba(157,107,255,0.08),
+        0 1px 0 rgba(255,255,255,0.06) inset;
+    }
+    .converter::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent2), var(--pink-hot), var(--cyan), transparent);
+      opacity: 0.7;
+      z-index: 1;
     }
     .converter-header {
       display: flex;
@@ -441,8 +536,10 @@
       letter-spacing: 0.2px;
     }
     .direction-btn.active {
-      background: linear-gradient(135deg, var(--accent2) 0%, var(--pink) 100%);
+      background: linear-gradient(135deg, var(--accent2) 0%, var(--pink-hot) 100%);
       color: #fff;
+      text-shadow: 0 1px 2px rgba(120,20,80,0.25);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);
     }
     .direction-btn:first-child { border-right: 1px solid rgba(139,92,246,0.1); }
     .direction-btn:not(.active):hover {
@@ -599,30 +696,31 @@
       background: linear-gradient(90deg, transparent, rgba(167,139,250,0.2), transparent);
     }
     .info-card:hover {
-      border-color: rgba(167,139,250,0.25);
-      transform: translateY(-3px);
-      box-shadow: 0 16px 48px rgba(0,0,0,0.25);
+      border-color: rgba(255,122,217,0.3);
+      transform: translateY(-4px);
+      box-shadow: 0 18px 54px rgba(0,0,0,0.3), 0 0 40px rgba(255,122,217,0.08);
     }
     .info-card .icon-wrap {
-      width: 44px; height: 44px;
-      border-radius: 12px;
+      width: 46px; height: 46px;
+      border-radius: 13px;
       display: flex;
       align-items: center;
       justify-content: center;
       margin-bottom: 18px;
-      font-size: 1.2rem;
+      font-size: 1.25rem;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
     }
     .icon-purple {
-      background: rgba(139,92,246,0.1);
-      border: 1px solid rgba(139,92,246,0.15);
+      background: rgba(157,107,255,0.14);
+      border: 1px solid rgba(196,154,255,0.25);
     }
     .icon-pink {
-      background: rgba(244,114,182,0.1);
-      border: 1px solid rgba(244,114,182,0.15);
+      background: rgba(255,122,217,0.12);
+      border: 1px solid rgba(255,122,217,0.25);
     }
     .icon-blue {
-      background: rgba(96,165,250,0.1);
-      border: 1px solid rgba(96,165,250,0.15);
+      background: rgba(111,227,255,0.1);
+      border: 1px solid rgba(111,227,255,0.22);
     }
     .info-card h3 {
       font-size: 0.95rem;
@@ -737,14 +835,37 @@
     footer .separator { color: rgba(139,92,246,0.15); }
 
     /* ── Responsive ── */
+    @media (max-width: 960px) {
+      .hero { grid-template-columns: 1fr 280px; gap: 36px; }
+    }
+    @media (max-width: 860px) {
+      .hero { grid-template-columns: 1fr; }
+    }
     @media (max-width: 640px) {
+      nav { padding: 0 16px; height: 60px; }
       .nav-links li:not(:last-child):not(:nth-last-child(2)) { display: none; }
-      .hero { padding: 120px 16px 60px; }
-      .hero h1 { letter-spacing: -2px; }
-      .converter-body { padding: 22px; }
+      .hero { padding: 116px 18px 56px; }
+      .hero h1 { letter-spacing: -1.5px; }
+      .hero p { font-size: 0.95rem; }
+      main { padding: 0 16px 80px; }
+      .converter-body { padding: 22px 18px; }
+      .direction-btn { padding: 14px 8px; font-size: 0.8rem; }
       .actions { flex-direction: column; }
       .actions .btn { width: 100%; justify-content: center; }
       .format-content { grid-template-columns: 1fr; }
+      .toast { right: 16px; left: 16px; bottom: 20px; text-align: center; }
+      .drop-zone { padding: 40px 16px; }
+      .info-card { padding: 24px; }
+      textarea { font-size: 0.75rem; padding: 16px; }
+    }
+    /* iOS safe area for fixed nav */
+    @supports (padding: max(0px)) {
+      nav { padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); }
+    }
+    /* prefers-reduced-motion: honor accessibility */
+    @media (prefers-reduced-motion: reduce) {
+      .particle, .petal, .sparkle, .hero-image, .arrow-icon { animation: none !important; }
+      html { scroll-behavior: auto; }
     }
   </style>
 </head>
@@ -752,12 +873,16 @@
 
 <div class="anime-bg"></div>
 <div class="anime-bg-overlay"></div>
+<div class="anime-bg-vignette"></div>
 
 <!-- Floating particles -->
 <div class="particles" id="particles"></div>
 
 <!-- Sakura petals -->
 <div class="petals" id="petals"></div>
+
+<!-- Twinkling sparkles -->
+<div class="sparkles" id="sparkles"></div>
 
 <nav>
   <a href="#" class="nav-logo">
@@ -781,7 +906,7 @@
   <div class="hero-content">
     <div class="hero-badge">
       <span class="pulse"></span>
-      <span data-i18n="hero.badge">MIT 协议 · 零依赖</span>
+      <span data-i18n="hero.badge">MIT 协议 · 零依赖 · 本地转换</span>
     </div>
     <h1>
       <span data-i18n="hero.title1">WorkBuddy</span>
@@ -789,6 +914,7 @@
       <span class="gradient-text" data-i18n="hero.title2">Cockpit Tools</span><br>
       <span data-i18n="hero.subtitle">账号格式转换器</span>
     </h1>
+    <div class="jp-sub" data-i18n="hero.jpsub">アカウント変換<span class="kira">✦</span>コンバーター</div>
     <p data-i18n="hero.desc">在 WorkBuddy 导出格式与 Cockpit Tools 账号格式之间自由转换。<br>纯前端实现，无需服务器，数据不会离开你的浏览器。</p>
     <div class="hero-btns">
       <a href="#converter" class="btn btn-primary" data-i18n="hero.cta1">立即使用</a>
@@ -796,7 +922,8 @@
     </div>
   </div>
   <div class="hero-image">
-    <img src="hero-anime.jpg" alt="Cyberpunk anime illustration">
+    <span class="ribbon" data-i18n="hero.ribbon">変換開始</span>
+    <img src="hero-anime.jpg" alt="Anime key visual illustration">
   </div>
 </section>
 
@@ -927,10 +1054,12 @@
     zh: {
       "nav.converter": "转换器",
       "nav.format": "格式参考",
-      "hero.badge": "MIT 协议 · 零依赖",
+      "hero.badge": "MIT 协议 · 零依赖 · 本地转换",
       "hero.title1": "WorkBuddy",
       "hero.title2": "Cockpit Tools",
       "hero.subtitle": "账号格式转换器",
+      "hero.jpsub": "アカウント変換<span class=\"kira\">✦</span>コンバーター",
+      "hero.ribbon": "変換開始",
       "hero.desc": "在 WorkBuddy 导出格式与 Cockpit Tools 账号格式之间自由转换。<br>纯前端实现，无需服务器，数据不会离开你的浏览器。",
       "hero.cta1": "立即使用",
       "hero.cta2": "查看格式",
@@ -961,10 +1090,12 @@
     en: {
       "nav.converter": "Converter",
       "nav.format": "Format",
-      "hero.badge": "MIT License · Zero Dependency",
+      "hero.badge": "MIT License · Zero Dependency · Local",
       "hero.title1": "WorkBuddy",
       "hero.title2": "Cockpit Tools",
       "hero.subtitle": "Account Format Converter",
+      "hero.jpsub": "アカウント変換<span class=\"kira\">✦</span>コンバーター",
+      "hero.ribbon": "START",
       "hero.desc": "Convert WorkBuddy account exports to Cockpit Tools format and vice versa.<br>Pure frontend. Your tokens never leave your browser.",
       "hero.cta1": "Start Converting",
       "hero.cta2": "View Formats",
@@ -1033,20 +1164,38 @@
 
   function createPetals() {
     const container = document.getElementById("petals");
-    for (let i = 0; i < 15; i++) {
+    for (let i = 0; i < 18; i++) {
       const p = document.createElement("div");
       p.className = "petal";
       p.style.left = Math.random() * 100 + "%";
-      p.style.animationDuration = (12 + Math.random() * 15) + "s";
-      p.style.animationDelay = (Math.random() * 15) + "s";
-      p.style.width = (6 + Math.random() * 8) + "px";
-      p.style.height = (6 + Math.random() * 8) + "px";
+      p.style.animationDuration = (11 + Math.random() * 14) + "s";
+      p.style.animationDelay = (Math.random() * 16) + "s";
+      const sz = (7 + Math.random() * 8) + "px";
+      p.style.width = sz;
+      p.style.height = sz;
       container.appendChild(p);
+    }
+  }
+
+  function createSparkles() {
+    const container = document.getElementById("sparkles");
+    const glyphs = ["✦", "✧", "｡", "˚", "⋆"];
+    for (let i = 0; i < 16; i++) {
+      const s = document.createElement("div");
+      s.className = "sparkle";
+      s.textContent = glyphs[Math.floor(Math.random() * glyphs.length)];
+      s.style.left = Math.random() * 100 + "%";
+      s.style.top = Math.random() * 100 + "%";
+      s.style.animationDuration = (2.2 + Math.random() * 3.5) + "s";
+      s.style.animationDelay = (Math.random() * 5) + "s";
+      s.style.fontSize = (8 + Math.random() * 10) + "px";
+      container.appendChild(s);
     }
   }
 
   createParticles();
   createPetals();
+  createSparkles();
 
   // ── Converter state ──
   let currentDirection = "wb2cockpit";
