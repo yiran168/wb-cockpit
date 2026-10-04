@@ -11,30 +11,32 @@
   function pad2(n) { return n < 10 ? "0" + n : "" + n; }
 
   /**
-   * Parse "YYYY-MM-DD HH:MM:SS" → Unix timestamp (seconds).
+   * Parse "YYYY-MM-DD HH:MM:SS" -> Unix timestamp (seconds).
+   * Treats input as local time (not UTC) to match WorkBuddy behavior.
    * Returns null on failure.
    */
   function parseDateStringToTs(str) {
     if (!str || typeof str !== "string") return null;
     var m = str.trim().match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2}):(\d{2})/);
     if (!m) return null;
-    var d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]));
+    // Use local time, not UTC — WorkBuddy exports local time
+    var d = new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]);
     var ts = Math.floor(d.getTime() / 1000);
     return isNaN(ts) ? null : ts;
   }
 
   /**
-   * Unix timestamp (seconds) → "YYYY-MM-DD HH:MM:SS" (UTC).
+   * Unix timestamp (seconds) -> "YYYY-MM-DD HH:MM:SS" (local time).
    */
   function tsToDateString(ts) {
     var d = new Date(ts * 1000);
-    return d.getUTCFullYear() + "-" + pad2(d.getUTCMonth() + 1) + "-" + pad2(d.getUTCDate()) +
-      " " + pad2(d.getUTCHours()) + ":" + pad2(d.getUTCMinutes()) + ":" + pad2(d.getUTCSeconds());
+    return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()) +
+      " " + pad2(d.getHours()) + ":" + pad2(d.getMinutes()) + ":" + pad2(d.getSeconds());
   }
 
   /**
    * MD5 hash — returns 32-char hex string.
-   * Sourced from a well-tested public-domain implementation.
+   * Well-tested implementation using unsigned 32-bit math.
    */
   function md5(str) {
     /* eslint-disable no-bitwise */
@@ -124,27 +126,58 @@
 
   // ── Detect format ────────────────────────────────────────
 
+  /**
+   * Check if an object looks like a WorkBuddy export item.
+   * Key signal: expires_at is a date string like "2026-11-17 17:45:36".
+   */
+  function isWorkBuddyItem(item) {
+    if (!item || typeof item !== "object") return false;
+    if (!("access_token" in item)) return false;
+    // WorkBuddy: expires_at is a date string with dashes
+    if ("expires_at" in item && typeof item.expires_at === "string" && item.expires_at.indexOf("-") !== -1) return true;
+    // Fallback: has access_token but no Cockpit-specific fields
+    if (!("id" in item) && !("auth_raw" in item) && !("created_at" in item) && !("token_type" in item)) return true;
+    return false;
+  }
+
+  /**
+   * Check if an object looks like a Cockpit Tools export item.
+   * Key signals: id field starting with "workbuddy_", or has auth_raw/created_at.
+   */
+  function isCockpitItem(item) {
+    if (!item || typeof item !== "object") return false;
+    if (!("access_token" in item)) return false;
+    if ("id" in item && typeof item.id === "string" && item.id.indexOf("workbuddy_") === 0) return true;
+    if ("auth_raw" in item || "profile_raw" in item || "usage_raw" in item) return true;
+    if ("created_at" in item && typeof item.created_at === "number") return true;
+    if ("token_type" in item) return true;
+    return false;
+  }
+
   function looksLikeWorkBuddyExport(obj) {
     if (!Array.isArray(obj) || obj.length === 0) return false;
-    var item = obj[0];
-    return item && typeof item === "object" && "access_token" in item && "expires_at" in item &&
-           typeof item.expires_at === "string" && item.expires_at.includes("-");
+    // Check ALL items, not just the first
+    for (var i = 0; i < obj.length; i++) {
+      if (!isWorkBuddyItem(obj[i])) return false;
+    }
+    return true;
   }
 
   function looksLikeCockpitExport(obj) {
     if (!Array.isArray(obj) || obj.length === 0) return false;
-    var item = obj[0];
-    return item && typeof item === "object" && "access_token" in item &&
-           ("id" in item || "auth_raw" in item || "profile_raw" in item ||
-            "usage_raw" in item || "created_at" in item);
+    // Check ALL items, not just the first
+    for (var i = 0; i < obj.length; i++) {
+      if (!isCockpitItem(obj[i])) return false;
+    }
+    return true;
   }
 
-  // ── WorkBuddy → Cockpit Tools ───────────────────────────
+  // ── WorkBuddy -> Cockpit Tools ───────────────────────────
 
   function workbuddyToCockpit(wbArray) {
     var now = Math.floor(Date.now() / 1000);
-    return wbArray.map(function (item) {
-      var identity = item.uid || item.email || "workbuddy_user";
+    return wbArray.map(function (item, idx) {
+      var identity = item.uid || item.email || "workbuddy_user_" + idx;
       var id = "workbuddy_" + md5(identity);
       var ts = parseDateStringToTs(item.expires_at);
 
@@ -166,7 +199,7 @@
     });
   }
 
-  // ── Cockpit Tools → WorkBuddy ───────────────────────────
+  // ── Cockpit Tools -> WorkBuddy ───────────────────────────
 
   function cockpitToWorkbuddy(cockpitArray) {
     return cockpitArray.map(function (item) {
@@ -187,6 +220,11 @@
     try { parsed = JSON.parse(jsonString); }
     catch (e) { return { error: "Invalid JSON: " + e.message }; }
 
+    // Handle single object (wrap in array)
+    if (!Array.isArray(parsed) && typeof parsed === "object" && parsed !== null) {
+      parsed = [parsed];
+    }
+
     if (looksLikeWorkBuddyExport(parsed)) {
       return { direction: "wb2cockpit", data: workbuddyToCockpit(parsed) };
     }
@@ -199,7 +237,8 @@
   // ── Export ───────────────────────────────────────────────
 
   var api = { convert: convert, workbuddyToCockpit: workbuddyToCockpit, cockpitToWorkbuddy: cockpitToWorkbuddy,
-              parseDateStringToTs: parseDateStringToTs, tsToDateString: tsToDateString, md5: md5 };
+              parseDateStringToTs: parseDateStringToTs, tsToDateString: tsToDateString, md5: md5,
+              isWorkBuddyItem: isWorkBuddyItem, isCockpitItem: isCockpitItem };
 
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else global.WorkBuddyConverter = api;
