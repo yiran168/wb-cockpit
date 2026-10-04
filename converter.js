@@ -135,22 +135,32 @@
     if (!("access_token" in item)) return false;
     // WorkBuddy: expires_at is a date string with dashes
     if ("expires_at" in item && typeof item.expires_at === "string" && item.expires_at.indexOf("-") !== -1) return true;
-    // Fallback: has access_token but no Cockpit-specific fields
-    if (!("id" in item) && !("auth_raw" in item) && !("created_at" in item) && !("token_type" in item)) return true;
+    // Has email + uid but no Cockpit-specific fields
+    if ("email" in item && "uid" in item &&
+        !("id" in item) && !("auth_raw" in item) && !("created_at" in item) && !("token_type" in item)) return true;
+    // Has access_token + email, no Cockpit fields
+    if ("email" in item &&
+        !("id" in item) && !("auth_raw" in item) && !("created_at" in item) && !("token_type" in item) &&
+        !("nickname" in item) && !("profile_raw" in item)) return true;
     return false;
   }
 
   /**
    * Check if an object looks like a Cockpit Tools export item.
-   * Key signals: id field starting with "workbuddy_", or has auth_raw/created_at.
+   * Key signals: id field, auth_raw/created_at/token_type, or numeric expires_at.
    */
   function isCockpitItem(item) {
     if (!item || typeof item !== "object") return false;
     if (!("access_token" in item)) return false;
-    if ("id" in item && typeof item.id === "string" && item.id.indexOf("workbuddy_") === 0) return true;
+    // Has id field (any id, not just workbuddy_ prefix)
+    if ("id" in item && typeof item.id === "string") return true;
+    // Has Cockpit-specific metadata fields
     if ("auth_raw" in item || "profile_raw" in item || "usage_raw" in item) return true;
-    if ("created_at" in item && typeof item.created_at === "number") return true;
+    if ("created_at" in item) return true;
     if ("token_type" in item) return true;
+    if ("nickname" in item) return true;
+    // Has numeric expires_at (Cockpit uses Unix timestamps)
+    if ("expires_at" in item && typeof item.expires_at === "number") return true;
     return false;
   }
 
