@@ -21,7 +21,7 @@
     :root {
       --bg: #f5f5f7;
       --bg-elev: #ffffff;
-      --bg-inset: #f5f5f7;
+      --bg-inset: rgba(120,120,128,0.07);
       --text: #1d1d1f;
       --text-dim: #6e6e73;
       --text-faint: #86868b;
@@ -37,9 +37,12 @@
       --green-tint: rgba(52,199,89,0.12);
       --red: #d70015;
       --red-tint: rgba(255,59,48,0.08);
-      --nav-glass: rgba(255,255,255,0.72);
+      --nav-glass: rgba(255,255,255,0.6);
+      --glass-card: rgba(255,255,255,0.58);
+      --glass-border: rgba(255,255,255,0.65);
+      --glass-highlight: rgba(255,255,255,0.85);
       --seg-bg: rgba(120,120,128,0.12);
-      --shadow-card: 0 4px 24px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-card: 0 4px 24px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03);
       --shadow-pop: 0 12px 48px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.05);
       --shadow-art: 0 30px 80px rgba(29,29,31,0.18), 0 6px 24px rgba(29,29,31,0.1);
       --radius: 18px;
@@ -49,6 +52,11 @@
       --code-text: #d6d6da;
       --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
       --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace;
+      /* soft mesh gradient that glass panels can refract */
+      --mesh-1: rgba(255,95,162,0.14);
+      --mesh-2: rgba(124,92,230,0.12);
+      --mesh-3: rgba(79,140,255,0.10);
+      --mesh-4: rgba(255,190,120,0.07);
     }
 
     /* ── Dark mode (automatic, like Apple) ── */
@@ -72,20 +80,26 @@
         --green-tint: rgba(48,209,88,0.14);
         --red: #ff453a;
         --red-tint: rgba(255,69,58,0.12);
-        --nav-glass: rgba(10,10,12,0.66);
+        --nav-glass: rgba(12,12,16,0.55);
+        --glass-card: rgba(28,28,32,0.55);
+        --glass-border: rgba(255,255,255,0.12);
+        --glass-highlight: rgba(255,255,255,0.14);
         --seg-bg: rgba(120,120,128,0.22);
-        --shadow-card: 0 0 0 1px rgba(255,255,255,0.06), 0 8px 32px rgba(0,0,0,0.45);
-        --shadow-pop: 0 0 0 1px rgba(255,255,255,0.08), 0 16px 56px rgba(0,0,0,0.55);
+        --shadow-card: 0 8px 32px rgba(0,0,0,0.45);
+        --shadow-pop: 0 16px 56px rgba(0,0,0,0.55);
         --shadow-art: 0 30px 90px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.08);
         --code-bg: #161618;
         --code-text: #d6d6da;
+        --mesh-1: rgba(255,95,162,0.16);
+        --mesh-2: rgba(124,92,230,0.18);
+        --mesh-3: rgba(79,140,255,0.14);
+        --mesh-4: rgba(255,190,120,0.06);
       }
     }
 
     html { scroll-behavior: smooth; }
 
     body {
-      background: var(--bg);
       color: var(--text);
       font-family: var(--font-sans);
       line-height: 1.5;
@@ -94,6 +108,22 @@
       -moz-osx-font-smoothing: grayscale;
       text-rendering: optimizeLegibility;
       transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    /* Fixed mesh gradient — the color that glass panels refract.
+       Lives on its own layer below all content (body has no opaque bg). */
+    .mesh-bg {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background-color: var(--bg);
+      background-image:
+        radial-gradient(ellipse 90% 55% at 15% -10%, var(--mesh-1), transparent 70%),
+        radial-gradient(ellipse 75% 55% at 90% 5%, var(--mesh-2), transparent 70%),
+        radial-gradient(ellipse 70% 60% at 45% 115%, var(--mesh-3), transparent 70%),
+        radial-gradient(ellipse 50% 40% at 100% 70%, var(--mesh-4), transparent 70%);
+      transition: background-color 0.3s ease;
+      pointer-events: none;
     }
 
     ::selection { background: var(--accent-ring); }
@@ -109,12 +139,13 @@
       justify-content: space-between;
       padding: 0 24px;
       background: var(--nav-glass);
-      backdrop-filter: blur(20px) saturate(180%);
-      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
       border-bottom: 1px solid var(--hairline);
+      box-shadow: inset 0 -1px 0 rgba(255,255,255,0.06);
       transition: box-shadow 0.25s ease;
     }
-    nav.scrolled { box-shadow: 0 4px 24px rgba(0,0,0,0.05); }
+    nav.scrolled { box-shadow: 0 4px 24px rgba(0,0,0,0.06), inset 0 -1px 0 rgba(255,255,255,0.06); }
     .nav-logo {
       display: flex;
       align-items: center;
@@ -176,7 +207,9 @@
     .lang-btn.active {
       background: var(--bg-elev);
       color: var(--text);
-      box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+      box-shadow:
+        0 1px 4px rgba(0,0,0,0.12),
+        inset 0 1px 0 var(--glass-highlight);
     }
 
     /* ── Hero: centered, huge type, generous air ── */
@@ -286,10 +319,15 @@
       right: -18px;
       bottom: 96px;
       width: 176px;
-      background: var(--bg-elev);
+      background: var(--glass-card);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      border: 1px solid var(--glass-border);
       padding: 7px;
       border-radius: 20px;
-      box-shadow: var(--shadow-pop);
+      box-shadow:
+        var(--shadow-pop),
+        inset 0 1px 0 var(--glass-highlight);
       transform: rotate(2.4deg);
       transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
     }
@@ -330,12 +368,16 @@
       letter-spacing: -0.01em;
     }
 
-    /* ── Converter card ── */
+    /* ── Converter card: true Apple glass ── */
     .card {
-      background: var(--bg-elev);
+      background: var(--glass-card);
+      backdrop-filter: blur(28px) saturate(180%);
+      -webkit-backdrop-filter: blur(28px) saturate(180%);
       border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-card);
-      border: 1px solid var(--hairline);
+      box-shadow:
+        var(--shadow-card),
+        inset 0 1px 0 var(--glass-highlight);
+      border: 1px solid var(--glass-border);
       transition: background 0.3s ease;
     }
     .converter-card { padding: 30px; }
@@ -368,7 +410,10 @@
     .seg button.active {
       background: var(--bg-elev);
       color: var(--text);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1), 0 0.5px 1.5px rgba(0,0,0,0.06);
+      box-shadow:
+        0 2px 8px rgba(0,0,0,0.1),
+        0 0.5px 1.5px rgba(0,0,0,0.06),
+        inset 0 1px 0 var(--glass-highlight);
       font-weight: 600;
     }
 
@@ -477,16 +522,22 @@
       gap: 16px;
     }
     .feature-card {
-      background: var(--bg-elev);
-      border: 1px solid var(--hairline);
+      background: var(--glass-card);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      border: 1px solid var(--glass-border);
       border-radius: var(--radius-lg);
       padding: 30px 26px;
-      box-shadow: var(--shadow-card);
+      box-shadow:
+        var(--shadow-card),
+        inset 0 1px 0 var(--glass-highlight);
       transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s;
     }
     .feature-card:hover {
       transform: translateY(-4px);
-      box-shadow: var(--shadow-pop);
+      box-shadow:
+        var(--shadow-pop),
+        inset 0 1px 0 var(--glass-highlight);
     }
     .f-icon {
       width: 42px; height: 42px;
@@ -572,14 +623,17 @@
     footer a:hover { color: var(--accent); }
     footer .sep { color: var(--hairline-strong); }
 
-    /* ── Toast ── */
+    /* ── Toast: frosted glass pill ── */
     .toast {
       position: fixed;
       left: 50%;
       bottom: 34px;
       transform: translate(-50%, 80px);
-      background: var(--text);
-      color: var(--bg);
+      background: var(--glass-card);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      color: var(--text);
+      border: 1px solid var(--glass-border);
       padding: 11px 24px;
       border-radius: var(--pill);
       font-size: 0.84rem;
@@ -587,7 +641,9 @@
       opacity: 0;
       transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
       z-index: 200;
-      box-shadow: 0 10px 34px rgba(0,0,0,0.22);
+      box-shadow:
+        0 10px 34px rgba(0,0,0,0.16),
+        inset 0 1px 0 var(--glass-highlight);
       pointer-events: none;
     }
     .toast.visible { transform: translate(-50%, 0); opacity: 1; }
@@ -625,6 +681,8 @@
   </style>
 </head>
 <body>
+
+<div class="mesh-bg"></div>
 
 <nav id="nav">
   <a href="#" class="nav-logo">
