@@ -4,6 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>WorkBuddy ⇄ Cockpit Tools Converter</title>
+  <meta name="description" content="在 WorkBuddy 与 Cockpit Tools 之间自由转换账号格式。纯前端实现，毫秒级时间精度，数据始终留在浏览器中。Convert account exports between WorkBuddy and Cockpit Tools, entirely in your browser.">
+  <meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="WorkBuddy ⇄ Cockpit Tools Converter">
+  <meta property="og:description" content="Convert account exports between WorkBuddy and Cockpit Tools — pure frontend, millisecond precision, tokens never leave your browser.">
+  <meta property="og:image" content="https://yiran168.github.io/wb-cockpit/bg-anime.jpg">
+  <meta property="og:url" content="https://yiran168.github.io/wb-cockpit/">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -648,10 +658,10 @@
   </div>
   <div class="artwork">
     <div class="artwork-main">
-      <img src="bg-anime.jpg" alt="Anime cityscape key visual">
+      <img src="bg-anime.jpg" alt="Anime cityscape key visual" width="1536" height="1024" decoding="async">
     </div>
     <div class="artwork-float">
-      <img src="hero-anime.jpg" alt="Anime character illustration">
+      <img src="hero-anime.jpg" alt="Anime character illustration" width="900" height="1350" loading="lazy" decoding="async">
       <div class="cap" data-i18n="hero.artcap">変換、始めよう。</div>
     </div>
   </div>
@@ -664,11 +674,11 @@
     <p class="section-sub" data-i18n="conv.sub">粘贴 JSON，方向自动识别，时间精度到毫秒。</p>
     <div class="card converter-card">
 
-      <div class="seg" role="tablist" aria-label="Conversion direction">
-        <button class="active" id="btnWb2Cockpit" onclick="setDirection('wb2cockpit')" type="button">
+      <div class="seg" role="group" aria-label="Conversion direction">
+        <button class="active" id="btnWb2Cockpit" onclick="setDirection('wb2cockpit')" type="button" aria-pressed="true">
           <span data-i18n="conv.wb2cockpit">WorkBuddy → Cockpit Tools</span>
         </button>
-        <button id="btnCockpit2Wb" onclick="setDirection('cockpit2wb')" type="button">
+        <button id="btnCockpit2Wb" onclick="setDirection('cockpit2wb')" type="button" aria-pressed="false">
           <span data-i18n="conv.cockpit2wb">Cockpit Tools → WorkBuddy</span>
         </button>
       </div>
@@ -692,12 +702,10 @@
         <button class="btn btn-plain btn-sm" onclick="clearAll()" data-i18n="btn.clear" type="button">清空</button>
       </div>
 
-      <div class="error-msg" id="errorMsg"></div>
+      <div class="error-msg" id="errorMsg" role="alert"></div>
 
-      <div class="result-area" id="resultArea">
-        <div class="result-label" id="resultLabel">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M20 6 9 17l-5-5"/></svg>
-        </div>
+      <div class="result-area" id="resultArea" aria-live="polite">
+        <div class="result-label" id="resultLabel"></div>
         <textarea id="outputArea" readonly spellcheck="false" style="min-height:210px;"></textarea>
         <div class="actions" style="margin-top:14px;">
           <button class="btn btn-primary btn-sm" onclick="copyResult()" data-i18n="btn.copy" type="button">复制结果</button>
@@ -788,7 +796,7 @@
   </p>
 </footer>
 
-<div class="toast" id="toast">已复制到剪贴板</div>
+<div class="toast" id="toast" role="status" aria-live="polite">已复制到剪贴板</div>
 
 <script src="converter.js"></script>
 <script>
@@ -926,8 +934,12 @@
 
   function setDirection(dir) {
     currentDirection = dir;
-    document.getElementById("btnWb2Cockpit").classList.toggle("active", dir === "wb2cockpit");
-    document.getElementById("btnCockpit2Wb").classList.toggle("active", dir === "cockpit2wb");
+    const b1 = document.getElementById("btnWb2Cockpit");
+    const b2 = document.getElementById("btnCockpit2Wb");
+    b1.classList.toggle("active", dir === "wb2cockpit");
+    b2.classList.toggle("active", dir === "cockpit2wb");
+    b1.setAttribute("aria-pressed", dir === "wb2cockpit" ? "true" : "false");
+    b2.setAttribute("aria-pressed", dir === "cockpit2wb" ? "true" : "false");
   }
 
   // ── File upload ──

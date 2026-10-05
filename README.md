@@ -31,9 +31,10 @@ Convert between WorkBuddy export format and Cockpit Tools account format.
 |------|---------|
 | **双向转换** — WorkBuddy → Cockpit Tools，或反向 | **Bidirectional** — WorkBuddy → Cockpit Tools or vice versa |
 | **自动识别** — 粘贴 JSON 后自动检测格式方向 | **Auto Detect** — Paste JSON and it auto-detects the format |
-| **时间格式处理** — `expires_at` 在日期字符串和 Unix 时间戳之间自动转换 | **Smart Date Handling** — `expires_at` auto-converts between date strings and Unix timestamps |
+| **毫秒级时间精度** — `expires_at` 与 Cockpit 内部的毫秒时间戳完全一致 | **Millisecond Precision** — `expires_at` written as ms timestamps matching Cockpit's internal format |
 | **纯前端** — 零依赖，零上传，所有转换在浏览器本地完成 | **Pure Frontend** — Zero dependencies, zero uploads, all conversion happens locally |
 | **隐私优先** — Token 不会发送到任何服务器 | **Privacy First** — Tokens never leave your browser |
+| **优雅设计** — Apple 风格浅色界面，自动适配深色模式 | **Elegant Design** — Apple-style light UI with automatic dark mode |
 | **MIT 协议** — 随意使用、修改、分发 | **MIT License** — Use, modify, and distribute freely |
 
 ---
@@ -127,7 +128,8 @@ const result = WorkBuddyConverter.convert(jsonString);
 - 纯 HTML/CSS/JS，零依赖 / Pure HTML/CSS/JS, zero dependencies
 - 内置 MD5 实现（RFC 1321）/ Built-in MD5 implementation (RFC 1321)
 - GitHub Pages 托管 / Hosted on GitHub Pages
-- AI 生成的二次元风格背景 / AI-generated anime-style background
+- Apple 风格设计：系统字体、自动深色模式、iOS 分段控件 / Apple-style design: system fonts, automatic dark mode, iOS segmented control
+- AI 生成的动漫主视觉插画 / AI-generated anime key-visual artwork
 - 支持中英文切换 / Chinese and English language support
 
 ---
