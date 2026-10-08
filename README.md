@@ -106,20 +106,62 @@ const result = WorkBuddyConverter.convert(jsonString);
 ]
 ```
 
+### 网关导出格式 / Gateway Export Format
+
+[workbuddy2api-panel](https://github.com/linguo2625469/workbuddy2api-panel) 与
+[workbuddy2api-hub](https://github.com/ardeyouxipianyi/workbuddy2api-hub) 的
+「导出账号」格式。键名 camelCase，`expiresAt` 为 Unix **秒**。
+
+```json
+{
+  "format": "workbuddy-accounts",
+  "version": 1,
+  "count": 1,
+  "accounts": [
+    {
+      "uid": "abb90fa7-xxxx",
+      "nickname": "63139186",
+      "domain": "www.workbuddy.cn",
+      "realm": "cn",
+      "platform": "CLI",
+      "enterpriseId": "",
+      "accessToken": "eyJ...",
+      "refreshToken": "eyJ...",
+      "expiresAt": 1794908736
+    }
+  ]
+}
+```
+
+裸数组（`[{...}]`）与单个对象同样支持。
+
 ### 字段映射 / Field Mapping
 
-| WorkBuddy | Cockpit Tools | 说明 / Description |
-|-----------|---------------|---------------------|
-| `email` | `email` | 直接映射 / Direct mapping |
-| `uid` | `uid` | 直接映射 / Direct mapping |
-| `access_token` | `access_token` | 直接映射 / Direct mapping |
-| `refresh_token` | `refresh_token` | 直接映射 / Direct mapping |
-| `expires_at` (string) | `expires_at` (i64) | 日期字符串 ↔ Unix 毫秒时间戳 / Date string ↔ Unix timestamp (ms) |
-| — | `id` | `workbuddy_` + MD5(uid 小写；无 uid 时用含 @ 的小写 email) / MD5 of lowercased uid, else lowercased email with @ |
-| — | `token_type` | 固定 `"Bearer"` / Fixed `"Bearer"` |
-| — | `nickname` | 取 `email` 值 / Uses `email` value |
-| — | `created_at` / `last_used` | 当前 Unix 秒时间戳 / Current Unix timestamp (seconds) |
-| — | `status` | 固定 `"normal"` / Fixed `"normal"` |
+| WorkBuddy | Cockpit Tools | 网关导出 / Gateway | 说明 / Description |
+|-----------|---------------|--------------------|---------------------|
+| `email` | `email` | `email` | 直接映射 / Direct mapping |
+| `uid` | `uid` | `uid` | 直接映射 / Direct mapping |
+| `access_token` | `access_token` | `accessToken` | 键名随目标格式切换 / Key name follows target |
+| `refresh_token` | `refresh_token` | `refreshToken` | 键名随目标格式切换 / Key name follows target |
+| `expires_at` (string) | `expires_at` (ms) | `expiresAt` (s) | 三者互转，按量级自动识别秒/毫秒 / Auto-detects s vs ms by magnitude |
+| — | `id` | `uid` | Cockpit 的 `id` 取 `uid` / Cockpit `id` mirrors `uid` |
+| — | `token_type` | — | 固定 `"Bearer"` / Fixed `"Bearer"` |
+| — | `nickname` | `nickname` | 取 `nickname`，缺省回落 `email` / Falls back to `email` |
+| — | `created_at` / `last_used` | — | 当前 Unix 秒时间戳 / Current Unix timestamp (seconds) |
+| — | `status` | `enabled` | `"normal"` / `true` |
+| — | — | `realm` | `cn` ↔ `global`（hub 用 `intl`）/ Mapped between the two spellings |
+| — | — | `enterpriseId` | 企业版标识透传 / Passed through |
+
+### 三种格式互转 / Three-way Conversion
+
+| 输入 / Input | 输出 / Output | 用途 / Use case |
+|--------------|---------------|-----------------|
+| Cockpit Tools | 网关导入格式 | 把 Cockpit 的号搬进两个网关 / Move Cockpit accounts into either gateway |
+| 网关导出 | Cockpit Tools | 把网关的号搬进 Cockpit / Move gateway accounts into Cockpit |
+| WorkBuddy 导出 | Cockpit Tools | 原始用途 / Original use case |
+
+时间单位说明：Cockpit 用**毫秒**，两个网关用**秒**。转换时按量级（阈值 `1e11`）
+自动识别，无需手工换算。输出的 JSON 可直接粘进两个网关的「导入账号」。
 
 ---
 

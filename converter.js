@@ -293,56 +293,202 @@
     });
   }
 
-  // ── Cockpit Tools -> WorkBuddy ───────────────────────────
+  // ── Gateway (workbuddy-accounts) <-> Cockpit Tools ────────
+  //
+  // 网关导出格式（workbuddy2api-panel / workbuddy2api-hub 的「导出账号」），
+  // 两种容器都认：{format:"workbuddy-accounts",accounts:[...]} 与裸数组。
+  // 键名 camelCase：accessToken / refreshToken / expiresAt / realm / enterpriseId。
+  //
+  // 时间单位：两个网关都用 Unix 秒写 expiresAt，Cockpit 用毫秒 —— 转换时按
+  // MS_THRESHOLD 归一（与 normalizeToMs / normalizeToSeconds 同一口径）。
 
-  function cockpitToWorkbuddy(cockpitArray) {
+  /**
+   * Cockpit item -> 网关导入格式（camelCase 平铺对象）。
+   * 输出的数组可直接粘进两个网关的「导入账号」。
+   */
+  function cockpitToGateway(cockpitArray) {
     return cockpitArray.map(function (item) {
-      var result = {};
-      if (nonEmpty(item.email)) result.email = item.email;
-      if (nonEmpty(item.uid)) result.uid = item.uid;
-      if (item.expires_at !== null && item.expires_at !== undefined) {
-        var dateStr = tsToDateString(item.expires_at);
-        if (dateStr !== null) result.expires_at = dateStr;
+      var row = {};
+      var uid = nonEmpty(item.uid);
+      if (uid) row.uid = uid;
+
+      var email = nonEmpty(item.email);
+      var nickname = nonEmpty(item.nickname) || email;
+      if (nickname) row.nickname = nickname;
+      if (email) row.email = email;
+
+      var domain = nonEmpty(item.domain);
+      if (domain) row.domain = domain;
+
+      var at = nonEmpty(item.access_token);
+      if (at) row.accessToken = at;
+      var rt = nonEmpty(item.refresh_token);
+      if (rt) row.refreshToken = rt;
+
+      // Cockpit 毫秒 -> 网关秒。两个网关都自带毫秒兜底（panel 的
+      // secondsMagnitude / hub 的 normalize_epoch），写秒最稳。
+      var seconds = normalizeToSeconds(item.expires_at);
+      if (seconds !== null) row.expiresAt = seconds;
+
+      var realm = nonEmpty(item.realm);
+      if (realm === "global") realm = "intl"; // hub 用 intl，panel 用 global
+      if (realm) row.realm = realm;
+
+      var ent = nonEmpty(item.enterprise_id) || nonEmpty(item.enterpriseId);
+      if (ent) row.enterpriseId = ent;
+
+      row.platform = "CLI";
+      row.enabled = true;
+      row.source = "cockpit";
+      return row;
+    });
+  }
+
+  /**
+   * 网关导出条目 -> Cockpit 导入格式（snake_case）。
+   * 兼容两种键名（camelCase 与 snake_case）与嵌套形（{auth,account}）。
+   */
+  function gatewayToCockpit(gwArray) {
+    var now = Math.floor(Date.now() / 1000);
+    return gwArray.map(function (item) {
+      var auth = item.auth && typeof item.auth === "object" ? item.auth : {};
+      var acct = item.account && typeof item.account === "object" ? item.account : {};
+
+      // 逐层取值：平铺层 -> auth -> account（与 hub 的 pick() 同口径）。
+      function pick(key) {
+        var layers = [item, auth, acct];
+        for (var i = 0; i < layers.length; i++) {
+          var v = nonEmpty(layers[i][key]);
+          if (v) return v;
+          var alt = nonEmpty(layers[i][snake(key)]);
+          if (alt) return alt;
+        }
+        return null;
       }
-      if (nonEmpty(item.access_token)) result.access_token = item.access_token;
-      if (nonEmpty(item.refresh_token)) result.refresh_token = item.refresh_token;
+      function snake(key) {
+        return key.replace(/([A-Z])/g, function (m) { return "_" + m.toLowerCase(); });
+      }
+
+      var uid = pick("uid");
+      var accessToken = pick("accessToken");
+      var refreshToken = pick("refreshToken");
+
+      var result = {};
+      if (uid) {
+        result.id = uid;
+        result.uid = uid;
+      }
+      var email = pick("email");
+      if (email) result.email = email;
+      var nickname = pick("nickname") || email || uid;
+      if (nickname) result.nickname = nickname;
+      if (accessToken) result.access_token = accessToken;
+      if (refreshToken) result.refresh_token = refreshToken;
+      result.token_type = "Bearer";
+
+      // 网关秒 -> Cockpit 毫秒。
+      var seconds = normalizeToSeconds(pick("expiresAt"));
+      result.expires_at = seconds !== null ? seconds * 1000 : (now + 365 * 24 * 3600) * 1000;
+
+      var domain = pick("domain");
+      if (domain) result.domain = domain;
+      result.status = "normal";
+      result.created_at = now;
+      result.last_used = now;
       return result;
     });
   }
 
+  // ── Gateway 导出格式识别 ──────────────────────────────────
+
+  /**
+   * 条目是否为网关导出格式（camelCase 键）。
+   * 判据：带 accessToken（camelCase）或 JWT 形态的 access_token，
+   * 且不带 Cockpit 特有元字段（id / created_at / token_type）。
+   */
+  function isGatewayItem(item) {
+    if (!item || typeof item !== "object") return false;
+
+    // 嵌套形桌面端凭据：{auth:{accessToken...},account:{uid...}}
+    var auth = item.auth && typeof item.auth === "object" ? item.auth : null;
+    if (auth && nonEmpty(auth.accessToken) !== null) return true;
+
+    var at = nonEmpty(item.accessToken);
+    if (at === null) return false;
+
+    // Cockpit 导出是 snake_case 且带 id/created_at/token_type；网关导出没有。
+    // 两者都带 access_token 时按这些元字段区分。
+    var hasCockpitMeta = !!(item.id || item.token_type || item.created_at);
+    var hasSnakeToken = nonEmpty(item.access_token) !== null;
+    if (hasSnakeToken && !nonEmpty(item.accessToken)) return false; // 纯 Cockpit
+    if (hasCockpitMeta && hasSnakeToken && !nonEmpty(item.accessToken)) return false;
+
+    // camelCase accessToken 存在 = 网关导出（或手工平铺）
+    return true;
+  }
+
+  function looksLikeGatewayExport(obj) {
+    if (!Array.isArray(obj) || obj.length === 0) return false;
+    for (var i = 0; i < obj.length; i++) {
+      if (!isGatewayItem(obj[i])) return false;
+    }
+    return true;
+  }
+
   // ── Auto-detect & convert ────────────────────────────────
+
+  /**
+   * 解出账号数组：兼容裸数组、{accounts:[...]}、{items:[...]}、单对象。
+   * 返回 {rows, format}；format 为 "gateway" 时表示带 workbuddy-accounts 包装。
+   */
+  function extractRows(parsed) {
+    if (Array.isArray(parsed)) return { rows: parsed, format: "" };
+
+    if (parsed && typeof parsed === "object") {
+      if (Array.isArray(parsed.accounts)) {
+        // {"format":"workbuddy-accounts", accounts:[...]} —— 网关导出容器
+        var gw = String(parsed.format || "").indexOf("workbuddy-accounts") === 0;
+        return { rows: parsed.accounts, format: gw ? "gateway" : "" };
+      }
+      if (Array.isArray(parsed.items)) return { rows: parsed.items, format: "" };
+      return { rows: [parsed], format: "" };
+    }
+    return { rows: [], format: "" };
+  }
 
   function convert(jsonString) {
     var parsed;
     try { parsed = JSON.parse(jsonString); }
     catch (e) { return { error: "Invalid JSON: " + e.message }; }
 
-    // Unwrap { accounts: [...] } / { items: [...] } (Cockpit import supports these too)
-    if (!Array.isArray(parsed) && typeof parsed === "object" && parsed !== null) {
-      if (Array.isArray(parsed.accounts)) parsed = parsed.accounts;
-      else if (Array.isArray(parsed.items)) parsed = parsed.items;
+    var extracted = extractRows(parsed);
+    var rows = extracted.rows;
+    if (rows.length === 0) {
+      return { error: "Unrecognized format. Expected WorkBuddy export or Cockpit Tools export." };
     }
 
-    // Handle single object (wrap in array)
-    if (!Array.isArray(parsed) && typeof parsed === "object" && parsed !== null) {
-      parsed = [parsed];
+    // 网关导出（workbuddy-accounts 包装或 camelCase 裸数组）→ Cockpit
+    if (extracted.format === "gateway" || looksLikeGatewayExport(rows)) {
+      return { direction: "gw2cockpit", data: gatewayToCockpit(rows) };
     }
-
-    if (looksLikeWorkBuddyExport(parsed)) {
-      return { direction: "wb2cockpit", data: workbuddyToCockpit(parsed) };
+    if (looksLikeWorkBuddyExport(rows)) {
+      return { direction: "wb2cockpit", data: workbuddyToCockpit(rows) };
     }
-    if (looksLikeCockpitExport(parsed)) {
-      return { direction: "cockpit2wb", data: cockpitToWorkbuddy(parsed) };
+    if (looksLikeCockpitExport(rows)) {
+      // Cockpit → 网关导入格式（camelCase 秒值），可直接粘进两个网关
+      return { direction: "cockpit2wb", data: cockpitToGateway(rows) };
     }
     return { error: "Unrecognized format. Expected WorkBuddy export or Cockpit Tools export." };
   }
 
   // ── Export ───────────────────────────────────────────────
 
-  var api = { convert: convert, workbuddyToCockpit: workbuddyToCockpit, cockpitToWorkbuddy: cockpitToWorkbuddy,
+  var api = { convert: convert, workbuddyToCockpit: workbuddyToCockpit,
+              cockpitToWorkbuddy: cockpitToGateway, cockpitToGateway: cockpitToGateway,
+              gatewayToCockpit: gatewayToCockpit, extractRows: extractRows,
               parseDateStringToTs: parseDateStringToTs, tsToDateString: tsToDateString, md5: md5,
               identitySeed: identitySeed, normalizeToMs: normalizeToMs, normalizeToSeconds: normalizeToSeconds,
-              isWorkBuddyItem: isWorkBuddyItem, isCockpitItem: isCockpitItem };
+              isWorkBuddyItem: isWorkBuddyItem, isCockpitItem: isCockpitItem, isGatewayItem: isGatewayItem };
 
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else global.WorkBuddyConverter = api;

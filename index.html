@@ -863,7 +863,7 @@
   <!-- Converter -->
   <section class="section" id="converter">
     <h2 data-i18n="conv.h2">转换，轻而易举。</h2>
-    <p class="section-sub" data-i18n="conv.sub">粘贴 JSON，方向自动识别，时间精度到毫秒。</p>
+    <p class="section-sub" data-i18n="conv.sub">粘贴 JSON，方向自动识别。支持 WorkBuddy / Cockpit Tools / 网关导出三种格式互转。</p>
     <div class="glass-panel converter-card reveal">
       <div class="glass-face">
 
@@ -872,7 +872,7 @@
           <span data-i18n="conv.wb2cockpit">WorkBuddy → Cockpit Tools</span>
         </button>
         <button id="btnCockpit2Wb" onclick="setDirection('cockpit2wb')" type="button" aria-pressed="false">
-          <span data-i18n="conv.cockpit2wb">Cockpit Tools → WorkBuddy</span>
+          <span data-i18n="conv.cockpit2wb">Cockpit Tools → 网关导入</span>
         </button>
       </div>
 
@@ -1018,9 +1018,10 @@
       "hero.cta2": "查看格式",
       "hero.artcap": "変換、始めよう。",
       "conv.h2": "转换，轻而易举。",
-      "conv.sub": "粘贴 JSON，方向自动识别，时间精度到毫秒。",
+      "conv.sub": "粘贴 JSON，方向自动识别。支持 WorkBuddy / Cockpit Tools / 网关导出三种格式互转。",
       "conv.wb2cockpit": "WorkBuddy → Cockpit Tools",
-      "conv.cockpit2wb": "Cockpit Tools → WorkBuddy",
+      "conv.gw2cockpit": "网关导出 → Cockpit Tools",
+      "conv.cockpit2wb": "Cockpit Tools → 网关导入",
       "drop.title": "拖入 JSON 文件",
       "drop.hint": "或点击选择文件",
       "textarea.placeholder": "粘贴 JSON，例如：[{\"email\":\"...\",\"uid\":\"...\",\"access_token\":\"...\",\"refresh_token\":\"...\",\"expires_at\":\"2026-11-17 17:45:36\"}]",
@@ -1031,7 +1032,8 @@
       "btn.copy": "复制结果",
       "btn.download": "下载 JSON",
       "result.wb2cockpit": "转换成功：WorkBuddy → Cockpit Tools",
-      "result.cockpit2wb": "转换成功：Cockpit Tools → WorkBuddy",
+      "result.gw2cockpit": "转换成功：网关导出 → Cockpit Tools",
+      "result.cockpit2wb": "转换成功：Cockpit Tools → 网关导入格式",
       "error.empty": "请输入 JSON 内容",
       "error.fileType": "请选择 JSON 文件",
       "error.invalidJson": "JSON 解析失败，请检查格式是否正确",
@@ -1060,9 +1062,10 @@
       "hero.cta2": "View Formats",
       "hero.artcap": "Let the conversion begin.",
       "conv.h2": "Conversion, made effortless.",
-      "conv.sub": "Paste JSON. Direction auto-detected, timestamps precise to the millisecond.",
+      "conv.sub": "Paste JSON. Direction auto-detected. Converts between WorkBuddy / Cockpit Tools / gateway export formats.",
       "conv.wb2cockpit": "WorkBuddy → Cockpit Tools",
-      "conv.cockpit2wb": "Cockpit Tools → WorkBuddy",
+      "conv.gw2cockpit": "Gateway export → Cockpit Tools",
+      "conv.cockpit2wb": "Cockpit Tools → Gateway",
       "drop.title": "Drop a JSON file here",
       "drop.hint": "or click to browse",
       "textarea.placeholder": "Paste JSON here, e.g.: [{\"email\":\"...\",\"uid\":\"...\",\"access_token\":\"...\",\"refresh_token\":\"...\",\"expires_at\":\"2026-11-17 17:45:36\"}]",
@@ -1073,7 +1076,8 @@
       "btn.copy": "Copy Result",
       "btn.download": "Download JSON",
       "result.wb2cockpit": "Converted: WorkBuddy → Cockpit Tools",
-      "result.cockpit2wb": "Converted: Cockpit Tools → WorkBuddy",
+      "result.gw2cockpit": "Converted: Gateway export → Cockpit Tools",
+      "result.cockpit2wb": "Converted: Cockpit Tools → Gateway import",
       "error.empty": "Please enter JSON content",
       "error.fileType": "Please select a JSON file",
       "error.invalidJson": "Failed to parse JSON. Please check the syntax.",
@@ -1140,9 +1144,11 @@
     currentDirection = dir;
     const b1 = document.getElementById("btnWb2Cockpit");
     const b2 = document.getElementById("btnCockpit2Wb");
-    b1.classList.toggle("active", dir === "wb2cockpit");
+    // 网关导出 → Cockpit 与 WorkBuddy → Cockpit 共用同一个按钮（两者输出形态一致）
+    const wbSide = dir === "wb2cockpit" || dir === "gw2cockpit";
+    b1.classList.toggle("active", wbSide);
     b2.classList.toggle("active", dir === "cockpit2wb");
-    b1.setAttribute("aria-pressed", dir === "wb2cockpit" ? "true" : "false");
+    b1.setAttribute("aria-pressed", wbSide ? "true" : "false");
     b2.setAttribute("aria-pressed", dir === "cockpit2wb" ? "true" : "false");
   }
 
@@ -1206,7 +1212,8 @@
   function renderResultLabel() {
     const key = lastDirection === "wb2cockpit" ? "result.wb2cockpit" : "result.cockpit2wb";
     const unit = currentLang === "zh" ? "个账号" : (lastCount === 1 ? "account" : "accounts");
-    document.getElementById("resultLabel").textContent = `${t(key)} (${lastCount} ${unit})`;
+    const label = lastDirection === "gw2cockpit" ? t("result.gw2cockpit") : t(key);
+    document.getElementById("resultLabel").textContent = `${label} (${lastCount} ${unit})`;
   }
 
   function showError(msg) {
@@ -1264,7 +1271,7 @@
     const blob = new Blob([lastOutput], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    const dir = lastDirection === "wb2cockpit" ? "cockpit" : "workbuddy";
+    const dir = lastDirection === "cockpit2wb" ? "gateway" : "cockpit";
     a.href = url;
     a.download = `converted-${dir}-${new Date().toISOString().slice(0,10)}.json`;
     document.body.appendChild(a);
